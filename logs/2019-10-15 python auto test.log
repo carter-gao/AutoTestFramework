@@ -1,0 +1,77 @@
+[2019-10-15 22:45:13,435] - [apiOperateExcel.py:235] - [备份或新建API测试结果文件] - [INFO] - 成功备份测试结果文件：D:\PycharmProjects\auto_framework\results\api_back_fill_results\api_test_result_file backup at 2019-10-15 22-45-13.xlsx
+[2019-10-15 22:45:13,453] - [apiOperateExcel.py:254] - [备份或新建API测试结果文件] - [INFO] - 成功创建测试结果文件：D:\PycharmProjects\auto_framework\results\api_back_fill_results\api_test_result_file.xlsx
+[2019-10-15 22:45:13,454] - [test_api.py:72] - [执行API测试] - [INFO] - ==================================================开始执行==================================================
+[2019-10-15 22:45:13,455] - [requestMethod.py:93] - [发送请求] - [INFO] - 接口名称：免费天气查询接口
+[2019-10-15 22:45:13,456] - [requestMethod.py:50] - [配置接口] - [INFO] - URL：https://www.apiopen.top/weatherApi
+[2019-10-15 22:45:13,456] - [requestMethod.py:57] - [配置接口] - [INFO] - headers：{'Content-Type': 'application/x-www-form-urlencoded'}
+[2019-10-15 22:45:13,460] - [test_api.py:81] - [执行API测试] - [INFO] - -------------------------准备执行第1个用例-------------------------
+[2019-10-15 22:45:13,462] - [requestMethod.py:105] - [发送请求] - [INFO] - 用例名称：参数city不为空
+[2019-10-15 22:45:13,462] - [requestMethod.py:61] - [配置接口] - [INFO] - params：{'city': '南京'}
+[2019-10-15 22:45:13,849] - [requestMethod.py:139] - [发送请求] - [INFO] - 请求成功：<Response [200]>
+[2019-10-15 22:45:13,850] - [requestMethod.py:148] - [发送请求] - [INFO] - 响应内容：{'code': 200, 'msg': '成功!', 'data': {'yesterday': {'date': '14日星期一', 'high': '高温 22℃', 'fx': '东北风', 'low': '低温 13℃', 'fl': '<![CDATA[4-5级]]>', 'type': '阴'}, 'city': '南京', 'aqi': None, 'forecast': [{'date': '15日星期二', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 11℃', 'fengxiang': '东北风', 'type': '晴'}, {'date': '16日星期三', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 13℃', 'fengxiang': '东北风', 'type': '多云'}, {'date': '17日星期四', 'high': '高温 21℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '东北风', 'type': '阴'}, {'date': '18日星期五', 'high': '高温 23℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '北风', 'type': '晴'}, {'date': '19日星期六', 'high': '高温 23℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '北风', 'type': '晴'}], 'ganmao': '天气较凉，较易发生感冒，请适当增加衣服。体质较弱的朋友尤其应该注意防护。', 'wendu': '13'}}
+[2019-10-15 22:45:13,854] - [operateConfig.py:108] - [关联参数] - [INFO] - 成功写回关联参数：免费天气查询接口_city = 南京
+[2019-10-15 22:45:13,856] - [operateConfig.py:108] - [关联参数] - [INFO] - 成功写回关联参数：免费天气查询接口_ganmao = 天气较凉，较易发生感冒，请适当增加衣服。体质较弱的朋友尤其应该注意防护。
+[2019-10-15 22:45:13,857] - [test_api.py:84] - [执行API测试] - [INFO] - 预期结果：{'code': 200, 'data': {'city': '南京'}, 'msg': '成功!'}
+[2019-10-15 22:45:13,857] - [test_api.py:91] - [执行API测试] - [INFO] - 执行结果：SUCCESS
+[2019-10-15 22:45:13,858] - [test_api.py:81] - [执行API测试] - [INFO] - -------------------------准备执行第2个用例-------------------------
+[2019-10-15 22:45:13,858] - [requestMethod.py:105] - [发送请求] - [INFO] - 用例名称：参数city为空
+[2019-10-15 22:45:13,858] - [requestMethod.py:61] - [配置接口] - [INFO] - params：{'city': ''}
+[2019-10-15 22:45:13,947] - [requestMethod.py:139] - [发送请求] - [INFO] - 请求成功：<Response [200]>
+[2019-10-15 22:45:13,948] - [requestMethod.py:148] - [发送请求] - [INFO] - 响应内容：{'code': 201, 'msg': '未获取到相关数据!', 'data': None}
+[2019-10-15 22:45:13,948] - [test_api.py:84] - [执行API测试] - [INFO] - 预期结果：{'code': 201, 'msg': '未获取到相关数据!'}
+[2019-10-15 22:45:13,949] - [test_api.py:91] - [执行API测试] - [INFO] - 执行结果：SUCCESS
+[2019-10-15 22:45:13,991] - [test_api.py:119] - [执行API测试] - [INFO] - ==================================================执行完毕==================================================
+[2019-10-15 22:45:14,007] - [test_api.py:72] - [执行API测试] - [INFO] - ==================================================开始执行==================================================
+[2019-10-15 22:45:14,010] - [requestMethod.py:93] - [发送请求] - [INFO] - 接口名称：免费天气查询接口2
+[2019-10-15 22:45:14,011] - [requestMethod.py:50] - [配置接口] - [INFO] - URL：https://www.apiopen.top/weatherApi
+[2019-10-15 22:45:14,011] - [requestMethod.py:57] - [配置接口] - [INFO] - headers：{'Content-Type': 'application/x-www-form-urlencoded'}
+[2019-10-15 22:45:14,024] - [test_api.py:81] - [执行API测试] - [INFO] - -------------------------准备执行第1个用例-------------------------
+[2019-10-15 22:45:14,024] - [requestMethod.py:105] - [发送请求] - [INFO] - 用例名称：参数city为南京（从上下文读取）
+[2019-10-15 22:45:14,025] - [operateConfig.py:93] - [关联参数] - [INFO] - 成功获取关联参数：免费天气查询接口_city = 南京
+[2019-10-15 22:45:14,026] - [requestMethod.py:61] - [配置接口] - [INFO] - params：{'city': '南京'}
+[2019-10-15 22:45:14,275] - [requestMethod.py:139] - [发送请求] - [INFO] - 请求成功：<Response [200]>
+[2019-10-15 22:45:14,276] - [requestMethod.py:148] - [发送请求] - [INFO] - 响应内容：{'code': 200, 'msg': '成功!', 'data': {'yesterday': {'date': '14日星期一', 'high': '高温 22℃', 'fx': '东北风', 'low': '低温 13℃', 'fl': '<![CDATA[4-5级]]>', 'type': '阴'}, 'city': '南京', 'aqi': None, 'forecast': [{'date': '15日星期二', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 11℃', 'fengxiang': '东北风', 'type': '晴'}, {'date': '16日星期三', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 13℃', 'fengxiang': '东北风', 'type': '多云'}, {'date': '17日星期四', 'high': '高温 21℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '东北风', 'type': '阴'}, {'date': '18日星期五', 'high': '高温 23℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '北风', 'type': '晴'}, {'date': '19日星期六', 'high': '高温 23℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 14℃', 'fengxiang': '北风', 'type': '晴'}], 'ganmao': '天气较凉，较易发生感冒，请适当增加衣服。体质较弱的朋友尤其应该注意防护。', 'wendu': '13'}}
+[2019-10-15 22:45:14,276] - [test_api.py:84] - [执行API测试] - [INFO] - 预期结果：{'code': 200, 'data': {'city': '北京'}, 'msg': '成功!'}
+[2019-10-15 22:45:14,277] - [dataCompare.py:59] - [测试结果比对] - [ERROR] - 比对结果不一致：excepted "北京" != "南京" actual
+[2019-10-15 22:45:14,279] - [test_api.py:93] - [执行API测试] - [ERROR] - 执行结果：FAILURE
+[2019-10-15 22:45:14,281] - [test_api.py:81] - [执行API测试] - [INFO] - -------------------------准备执行第2个用例-------------------------
+[2019-10-15 22:45:14,281] - [requestMethod.py:105] - [发送请求] - [INFO] - 用例名称：参数city为天津
+[2019-10-15 22:45:14,282] - [requestMethod.py:61] - [配置接口] - [INFO] - params：{'city': '天津'}
+[2019-10-15 22:45:14,439] - [requestMethod.py:139] - [发送请求] - [INFO] - 请求成功：<Response [200]>
+[2019-10-15 22:45:14,440] - [requestMethod.py:148] - [发送请求] - [INFO] - 响应内容：{'code': 200, 'msg': '成功!', 'data': {'yesterday': {'date': '14日星期一', 'high': '高温 15℃', 'fx': '北风', 'low': '低温 5℃', 'fl': '<![CDATA[3-4级]]>', 'type': '晴'}, 'city': '天津', 'aqi': None, 'forecast': [{'date': '15日星期二', 'high': '高温 18℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 8℃', 'fengxiang': '西风', 'type': '晴'}, {'date': '16日星期三', 'high': '高温 17℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 10℃', 'fengxiang': '西南风', 'type': '小雨'}, {'date': '17日星期四', 'high': '高温 15℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 10℃', 'fengxiang': '西南风', 'type': '阴'}, {'date': '18日星期五', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 11℃', 'fengxiang': '南风', 'type': '阴'}, {'date': '19日星期六', 'high': '高温 22℃', 'fengli': '<![CDATA[3-4级]]>', 'low': '低温 13℃', 'fengxiang': '西南风', 'type': '晴'}], 'ganmao': '天气较凉，较易发生感冒，请适当增加衣服。体质较弱的朋友尤其应该注意防护。', 'wendu': '12'}}
+[2019-10-15 22:45:14,447] - [operateConfig.py:108] - [关联参数] - [INFO] - 成功写回关联参数：免费天气查询接口2_city = 天津
+[2019-10-15 22:45:14,453] - [operateConfig.py:108] - [关联参数] - [INFO] - 成功写回关联参数：免费天气查询接口2_date = 14日星期一
+[2019-10-15 22:45:14,454] - [test_api.py:84] - [执行API测试] - [INFO] - 预期结果：{'code': 200, 'data': {'city': '天津'}, 'msg': '成功!'}
+[2019-10-15 22:45:14,454] - [test_api.py:91] - [执行API测试] - [INFO] - 执行结果：SUCCESS
+[2019-10-15 22:45:14,456] - [test_api.py:81] - [执行API测试] - [INFO] - -------------------------准备执行第3个用例-------------------------
+[2019-10-15 22:45:14,456] - [requestMethod.py:105] - [发送请求] - [INFO] - 用例名称：参数city为重庆
+[2019-10-15 22:45:14,457] - [requestMethod.py:61] - [配置接口] - [INFO] - params：{'city': '重庆'}
+[2019-10-15 22:45:14,589] - [requestMethod.py:139] - [发送请求] - [INFO] - 请求成功：<Response [200]>
+[2019-10-15 22:45:14,589] - [requestMethod.py:148] - [发送请求] - [INFO] - 响应内容：{'code': 200, 'msg': '成功!', 'data': {'yesterday': {'date': '14日星期一', 'high': '高温 21℃', 'fx': '无持续风向', 'low': '低温 17℃', 'fl': '<![CDATA[<3级]]>', 'type': '小雨'}, 'city': '重庆', 'aqi': None, 'forecast': [{'date': '15日星期二', 'high': '高温 21℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 17℃', 'fengxiang': '无持续风向', 'type': '小雨'}, {'date': '16日星期三', 'high': '高温 19℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 17℃', 'fengxiang': '无持续风向', 'type': '小雨'}, {'date': '17日星期四', 'high': '高温 22℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 16℃', 'fengxiang': '无持续风向', 'type': '多云'}, {'date': '18日星期五', 'high': '高温 24℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 16℃', 'fengxiang': '无持续风向', 'type': '多云'}, {'date': '19日星期六', 'high': '高温 24℃', 'fengli': '<![CDATA[<3级]]>', 'low': '低温 17℃', 'fengxiang': '无持续风向', 'type': '多云'}], 'ganmao': '天冷空气湿度大，易发生感冒，请注意适当增加衣服，加强自我防护避免感冒。', 'wendu': '18'}}
+[2019-10-15 22:45:14,590] - [test_api.py:84] - [执行API测试] - [INFO] - 预期结果：{'code': 200, 'data': {'city': '重庆'}, 'msg': '成功!'}
+[2019-10-15 22:45:14,590] - [test_api.py:91] - [执行API测试] - [INFO] - 执行结果：SUCCESS
+[2019-10-15 22:45:14,646] - [test_api.py:112] - [执行API测试] - [ERROR] - *************************当前接口失败用例*************************
+[2019-10-15 22:45:14,647] - [test_api.py:113] - [执行API测试] - [ERROR] - 接口名称：免费天气查询接口2
+[2019-10-15 22:45:14,647] - [test_api.py:115] - [执行API测试] - [ERROR] - 第1个用例：参数city为南京（从上下文读取），比对结果：[('北京', '南京')]
+[2019-10-15 22:45:14,648] - [test_api.py:116] - [执行API测试] - [ERROR] - *************************当前接口失败用例*************************
+[2019-10-15 22:45:14,650] - [test_api.py:117] - [执行API测试] - [INFO] - ==================================================执行完毕==================================================
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:493] - [分析处理API测试结果] - [INFO] - 成功加载测试结果文件：api_test_result_file.xlsx
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:497] - [分析处理API测试结果] - [INFO] - 成功创建分析结果sheet页：analysis
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:510] - [分析处理API测试结果] - [INFO] - 开始分析测试结果：
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:734] - [分析处理API测试结果] - [INFO] - 计算出本次测试接口数：2
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:748] - [分析处理API测试结果] - [INFO] - 计算出本次测试失败接口数：1
+[2019-10-15 22:45:14,735] - [apiOperateExcel.py:708] - [分析处理API测试结果] - [INFO] - 计算出本次测试用例数：5
+[2019-10-15 22:45:14,736] - [apiOperateExcel.py:721] - [分析处理API测试结果] - [INFO] - 计算出本次测试失败用例数：1
+[2019-10-15 22:45:14,738] - [apiOperateExcel.py:542] - [分析处理API测试结果] - [INFO] - 正在提取失败接口相关数据...
+[2019-10-15 22:45:14,738] - [apiOperateExcel.py:566] - [分析处理API测试结果] - [INFO] - 提取成功：[{'api_name': '免费天气查询接口2', 'case_num': 3, 'failure_num': 1, 'success_num': 2}]
+[2019-10-15 22:45:14,738] - [apiOperateExcel.py:576] - [分析处理API测试结果] - [INFO] - 正在写入提取结果...
+[2019-10-15 22:45:14,738] - [apiOperateExcel.py:583] - [分析处理API测试结果] - [INFO] - 写入完毕.
+[2019-10-15 22:45:14,740] - [apiOperateExcel.py:591] - [分析处理API测试结果] - [INFO] - 正在提取失败用例相关数据...
+[2019-10-15 22:45:14,740] - [apiOperateExcel.py:607] - [分析处理API测试结果] - [INFO] - 提取成功：[['免费天气查询接口2', '参数city为南京（从上下文读取）', 1, 'A4:I4']]
+[2019-10-15 22:45:14,740] - [apiOperateExcel.py:618] - [分析处理API测试结果] - [INFO] - 正在写入提取结果...
+[2019-10-15 22:45:14,740] - [apiOperateExcel.py:626] - [分析处理API测试结果] - [INFO] - 写入完毕.
+[2019-10-15 22:45:14,740] - [apiOperateExcel.py:656] - [分析处理API测试结果] - [INFO] - 已生成接口执行情况饼图.
+[2019-10-15 22:45:14,741] - [apiOperateExcel.py:670] - [分析处理API测试结果] - [INFO] - 已生成用例执行情况饼图.
+[2019-10-15 22:45:14,742] - [apiOperateExcel.py:698] - [分析处理API测试结果] - [INFO] - 已生成失败接口概况条形图.
+[2019-10-15 22:45:14,742] - [apiOperateExcel.py:525] - [分析处理API测试结果] - [INFO] - 测试结果分析完毕.
+[2019-10-15 22:45:14,765] - [apiOperateExcel.py:534] - [分析处理API测试结果] - [INFO] - 成功保存，请打开excel文件analysis数据表查看！
