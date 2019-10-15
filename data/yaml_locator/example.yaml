@@ -1,0 +1,37 @@
+# ------------------------------------------------------------
+# 此YAML文件用于存放所有定位器
+# 多个页面的定位器使用'---'分割
+# 注：冒号必须用英文
+# -----定位器映射-----
+## PUBLIC
+  # I->ID
+  # N->NAME
+  # C->CLASS_NAME
+  # T->TAG_NAME
+  # L->LINK_TEXT
+  # P->PARTIAL_LINK_TEXT
+  # X->XPATH
+  # S->CSS_SELECTOR
+  # A->ACCESSIBILITY_ID
+  # M->CUSTOM
+  # IMAGE->IMAGE  # 根据图片定位比较特殊，它的值不是定位器，是图片名
+## ANDROID
+  # AU->ANDROID_UIAUTOMATOR
+  # AV->ANDROID_VIEWTAG
+  # AD->ANDROID_DATA_MATCHER
+## IOS
+  # IU->IOS_UIAUTOMATION
+  # IP->IOS_PREDICATE
+  # IC->IOS_CLASS_CHAIN
+# -----定位器映射-----
+# ------------------------------------------------------------
+
+### 第一个页面
+# 百度首页输入框
+输入框: i=>kw
+# 百度首页搜索按钮
+搜索按钮: i=>su
+---
+### 第二个页面
+test1: x=>//div/a
+test2: s=>div a

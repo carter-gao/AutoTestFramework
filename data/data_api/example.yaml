@@ -1,0 +1,87 @@
+# ------------------------------------------------------------
+# 此YAML文件用于编写接口信息，用例
+# 注：冒号必须用英文
+# ------格式------
+#0_api_name:
+#  name: 接口描述
+#  url: /xxx/xxx/xxx
+#  method: POST
+#  headers: {'Content-Type': 'application/x-www-form-urlencoded'}    # 接口headers，一般指传参类型，此处直接给定字典格式
+#  parameters:
+#    param1: value1   # 此处写全部参数及默认传参，这样每个case只需提供特定传参，然后update即可；也可不这样写，直接在每个用例中写所有参数
+#    param2: value2
+#    param3: $(k1)   # 关联参数写法$(k1)，k1指键名；关联参数调用上下文参数读写类读取替换
+#  1:  # 用例编号
+#    if_binary: true   # 此用例是否返回二进制流文件，若是给定true，若不是则无需设置
+#    title: 用例描述
+#    param: {'param1': 'xxx', param4: $(k2)}    # 每个用例特定传参，直接给定字典格式
+#    excepted: {'code': 200, 'msg': '成功!'}   # 预期结果，直接给定字典格式
+#  2:
+#    title: 用例描述
+#    param: {'param2': 'yyy'}
+#    excepted: {'code': 201, 'data': None, 'msg': '未获取到相关数据!'}
+# ------格式------
+# ------------------------------------------------------------
+# 免费接口源：https://www.jianshu.com/p/e6f072839282
+
+# yaml读取全部接口数据为字典，会按key排序，为保证上下文关联参数的先后顺序，在每个接口前加上数字
+1_weatherApi:
+  name: 免费天气查询接口
+  url: /weatherApi
+  method: GET
+  headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+  parameters:
+    city: 南京
+  1:
+    title: 参数city不为空
+    excepted: {'code': 200, 'data': {'city': '南京'}, 'msg': '成功!'}
+    back: ['city', 'ganmao']  # 需要回写的参数key，以列表形式给出
+  2:
+    title: 参数city为空
+    param: {'city': ''}
+    excepted: {'code': 201, 'msg': '未获取到相关数据!'}
+
+2_weatherApi:
+  name: 免费天气查询接口2
+  url: /weatherApi
+  method: GET
+  headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+  1:
+    title: 参数city为南京（从上下文读取）
+    param: {'city': '$(免费天气查询接口_city)'} # 关联参数名称为“参数来自的具体接口名_key名”
+    excepted: {'code': 200, 'data': {'city': '北京'}, 'msg': '成功!'}
+  2:
+    title: 参数city为天津
+    param: {'city': '天津'}
+    excepted: {'code': 200, 'data': {'city': '天津'}, 'msg': '成功!'}
+    back: ['city', ['date', 1]] # 若key在返回值中有多个，则这个key给定列表，其第二个参数为要取的第几个值
+  3:
+    title: 参数city为重庆
+    param: {'city': '重庆'}
+    excepted: {'code': 200, 'data': {'city': '重庆'}, 'msg': '成功!'}
+
+#3_searchContent:
+#  name: 今日头条首页搜索接口
+#  url: /api/search/content/
+#  method: GET
+#  headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+#  parameters:
+#    app_name: web_search
+#    offset: 0
+#    format: json
+#    keyword: ~  # 对应None
+#    autoload: true
+#    count: 20
+#    en_qc: 1
+#    cur_tab: 1
+#    from: search_tab
+#    pd: synthesis
+#    timestamp:
+#  1:
+#    title: 查询街拍美图
+#    param: {'keyword': '街拍'}
+#    excepted: {'city': '南京', 'keyword': '街拍', 'message': 'success'}
+#  2:
+#    title: 查询人物
+#    param: {'keyword': '周杰伦'}
+#    excepted: {'city': '南京', 'keyword': '周杰伦', 'message': 'success'}
