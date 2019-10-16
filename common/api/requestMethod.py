@@ -95,6 +95,13 @@ class SendRequest(_RequestsConfig):
         if self._api.get('headers'):
             self.set_headers(self._api.get('headers'))
 
+    def __del__(self):
+        """
+        每个实例对象使用完毕后，自动释放session
+        :return: None
+        """
+        self._session.close()
+
     def request(self, case_number: int, dynamic_parameter=None):
         """
         主函数：发送请求
@@ -104,19 +111,24 @@ class SendRequest(_RequestsConfig):
         """
         self._log.info('用例名称：{}'.format(self._api.get(case_number).get('title')))
         parameters = self._api.get('parameters')
-        # update或赋值参数
         param = self._api.get(case_number).get('param')
-        if parameters:
-            self._check_type_and_update(parameters, param)
-        else:
-            parameters = param
-        # 判断并替换上下文关联参数
-        p = str(copy.deepcopy(parameters))
-        if '$(' in p or '$（' in p:
-            parameters = self._replace_context(parameters)
-        # 替换动态参数
-        self._check_type_and_update(parameters, dynamic_parameter)
-
+        # 判空，若为无参数接口，则不做处理
+        if param or parameters:
+            # update或赋值参数
+            if parameters:
+                self._check_type_and_update(parameters, param)
+            else:
+                parameters = param
+            # 判断并替换上下文关联参数
+            p = str(copy.deepcopy(parameters))
+            if '$(' in p or '$（' in p:
+                parameters = self._replace_context(parameters)
+            # 替换动态参数
+            self._check_type_and_update(parameters, dynamic_parameter)
+            # 判断请求传参方式，form表单格式需要传入字典，JSON格式需要传入JSON串
+            if 'json' in str(self._api.get('headers')):
+                parameters = json.dumps(parameters)
+        # 发送请求
         try:
             method = self._api.get('method').upper()
             if method == 'POST':
@@ -134,24 +146,24 @@ class SendRequest(_RequestsConfig):
             else:
                 self._log.error('接口请求方式错误：{}'.format(method))
                 return
-
+            # 判断请求是否成功
             if response.status_code == 200:
                 self._log.info('请求成功：{}'.format(response))
             else:
                 self._log.error('请求失败：{}'.format(response))
                 response.raise_for_status()
-
             # 对于返回二进制流文件的用例，不返回json，需做个判断
-            if not self._api.get(case_number).get('if_binary'):
-                if response.content:
-                    res_dict = json.loads(response.content)
+            if response.content:
+                try:
+                    res_dict = response.json()
                     self._log.info('响应内容：{}'.format(res_dict))
                     # 回写关联参数
                     back = self._api.get(case_number).get('back')
                     if back:
                         self._write_context(res_dict, back)
                     return res_dict
-
+                except json.JSONDecodeError:
+                    self._log.info('此用例不返回JSON，返回值为二进制流文件！')
         except requests.exceptions.Timeout:
             self._log.error('请求超时！')
         except requests.exceptions.RequestException as e:
@@ -235,5 +247,5 @@ class SendRequest(_RequestsConfig):
 if __name__ == '__main__':
 
     from common.readYaml import ReadApi
-    api = ReadApi('example').read('weatherApi2')
-    SendRequest(api).request(2)
+    api = ReadApi('example').read('1_pytest_weatherApi')
+    SendRequest(api).request(1)

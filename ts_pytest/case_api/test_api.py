@@ -34,33 +34,35 @@ def backup_and_analyze_results():
     AnalyzeResults().exec_analysis()
 
 
-def read_files(keyword=None):
+def read_pytest_apis(filename_keyword=None):
     """
     读取所有文件内的接口信息，或指定含有某关键词的文件内接口信息(关键词在配置文件维护，确保唯一)
+    读取接口信息代码自动过滤pytest参数化用例（主键名称应该带有‘pytest’字样）
+    :param filename_keyword: 文件名关键字
     :return: 接口信息元组列表，类似：[(接口名称，接口信息),(),...]
     """
-    all_api = []
-    all_file_path = []
-    for filename in os.listdir(constant.api_data_path):
-        if not keyword:
-            if filename.endswith('.yaml'):
-                path = os.path.join(constant.api_data_path, filename)
-                all_file_path.append(path)
-        else:
-            if filename.endswith('.yaml') and keyword in filename:
-                path = os.path.join(constant.api_data_path, filename)
-                all_file_path.append(path)
-    for filename in all_file_path:
+    paths = []
+    for folder, subFolders, files in os.walk(constant.api_data_path):
+        for file in files:
+            if filename_keyword:
+                if file.endswith('.yaml') and filename_keyword in file:
+                    paths.append(os.path.join(folder, file))
+            else:
+                if file.endswith('.yaml'):
+                    paths.append(os.path.join(folder, file))
+    apis = []
+    for filename in paths:
         with open(filename) as fp:
             reader = fp.read()
-        all_ = yaml.load(reader, Loader=yaml.FullLoader)
-        for api in all_.values():
-            all_api.append((api.get('name'), api))
-    return all_api
+        all_api = yaml.load(reader, Loader=yaml.FullLoader)
+        for main_key, api in all_api.items():
+            if 'pytest' in main_key:
+                apis.append((api.get('name'), api))
+    return apis
 
 
-kw = OperateConfig(constant.config_pro_api).get_str('project', 'keyword')
-_all_api = read_files(keyword=kw)
+kw = OperateConfig(constant.config_pro_api).get_str('project', 'filename_keyword')
+_all_api = read_pytest_apis(filename_keyword=kw)
 logger = Logger('执行API测试').get_logger()
 
 
@@ -69,6 +71,12 @@ logger = Logger('执行API测试').get_logger()
 # 调用全局fixture处理测试结果，每次全量测试时使用，调试时注释掉
 @pytest.mark.usefixtures('bar')
 def test_main_api(api_name, api):
+    """
+    pytest接口测试主入口
+    :param api_name: 接口名称
+    :param api: 接口信息
+    :return: None
+    """
     logger.info('{}开始执行{}'.format('=' * 50, '=' * 50))
     req = SendRequest(api_dict=api)
     # 获取当前接口全部用例编号
@@ -76,7 +84,7 @@ def test_main_api(api_name, api):
     case_nums.sort()
     failure_results = []
     back_fill = BackFillToExcel()
-    # 循环执行每个用例
+    # 循环执行当前接口每个用例
     for case in case_nums:
         logger.info('{}准备执行第{}个用例{}'.format('-' * 25, case, '-' * 25))
         response = req.request(case)
@@ -89,13 +97,12 @@ def test_main_api(api_name, api):
         try:
             assert compare_result == []
             logger.info('执行结果：SUCCESS')
+            temp.append(1)
         except AssertionError:
             logger.error('执行结果：FAILURE')
             temp.append(0)
             # 若当前用例断言失败，将比对结果存入失败用例列表
             failure_results.append((case, api.get(case).get('title'), compare_result))
-        finally:
-            temp.append(1)
         # 循环内完成当前用例回写任务
         back_fill.fill_case_number(temp[2])
         back_fill.fill_api_name(temp[0])

@@ -6,13 +6,13 @@
 #  name: 接口描述
 #  url: /xxx/xxx/xxx
 #  method: POST
-#  headers: {'Content-Type': 'application/x-www-form-urlencoded'}    # 接口headers，一般指传参类型，此处直接给定字典格式
+#  headers: {'Content-Type': 'application/x-www-form-urlencoded'}，或{'Content-Type': 'application/json'}
+             # 接口headers，一般指传参类型，此处直接给定字典格式，若是表单形式，则可以省略
 #  parameters:
 #    param1: value1   # 此处写全部参数及默认传参，这样每个case只需提供特定传参，然后update即可；也可不这样写，直接在每个用例中写所有参数
 #    param2: value2
 #    param3: $(k1)   # 关联参数写法$(k1)，k1指键名；关联参数调用上下文参数读写类读取替换
 #  1:  # 用例编号
-#    if_binary: true   # 此用例是否返回二进制流文件，若是给定true，若不是则无需设置
 #    title: 用例描述
 #    param: {'param1': 'xxx', param4: $(k2)}    # 每个用例特定传参，直接给定字典格式
 #    excepted: {'code': 200, 'msg': '成功!'}   # 预期结果，直接给定字典格式
@@ -22,15 +22,23 @@
 #    excepted: {'code': 201, 'data': None, 'msg': '未获取到相关数据!'}
 # ------格式------
 # ------------------------------------------------------------
-# 免费接口源：https://www.jianshu.com/p/e6f072839282
+# 免费接口源：
+# https://www.jianshu.com/p/e6f072839282
+# https://blog.csdn.net/weixin_39527812/article/details/89489432
+# http://www.bejson.com/knownjson/webInterface/
 
-# yaml读取全部接口数据为字典，会按key排序，为保证上下文关联参数的先后顺序，在每个接口前加上数字
-1_weatherApi:
+# 用例编写注意点
+# pytest测试框架主入口程序，会读取yaml全部接口数据为字典，会按key排序，为保证上下文关联参数的先后顺序，在每个接口前加上数字
+# 若此接口通过pytest框架测试，则其名称应该带有‘pytest’，代码会自动识别
+# 若此接口不好通过pytest框架参数化，则该接口用例应该单独通过unittest框架编写，其名称无需设置关键词，pytest也可以无缝执行unittest风格用例
+  # 如pytest: 1_pytest_weatherApi, unittest: 1_weatherApi
+
+1_pytest_weatherApi:
   name: 免费天气查询接口
   url: /weatherApi
   method: GET
   headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-  parameters:
+  parameters:   #写parameters，代码会自动把每个用例的param参数update到parameters中作为请求参数；此处也可以直接给定字典格式
     city: 南京
   1:
     title: 参数city不为空
@@ -41,20 +49,19 @@
     param: {'city': ''}
     excepted: {'code': 201, 'msg': '未获取到相关数据!'}
 
-2_weatherApi:
+2_pytest_weatherApi:
   name: 免费天气查询接口2
   url: /weatherApi
   method: GET
-  headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-  1:
+  1:  # 不写parameters，代码会读取每个用例的param参数作为请求参数
     title: 参数city为南京（从上下文读取）
-    param: {'city': '$(免费天气查询接口_city)'} # 关联参数名称为“参数来自的具体接口名_key名”
-    excepted: {'code': 200, 'data': {'city': '北京'}, 'msg': '成功!'}
+    param: {'city': '$(免费天气查询接口_city)'} # 关联参数名称为“参数来自的具体接口名_key名”，这样做是为了确保生成的KEY名唯一
+    excepted: {'code': 200, 'data': {'city': '南京'}, 'msg': '成功!'}
   2:
     title: 参数city为天津
     param: {'city': '天津'}
     excepted: {'code': 200, 'data': {'city': '天津'}, 'msg': '成功!'}
-    back: ['city', ['date', 1]] # 若key在返回值中有多个，则这个key给定列表，其第二个参数为要取的第几个值
+    back: ['city', ['date', 1]] # 若key在返回值中有多个，则这个key给定列表，其第二个参数代表要取第几个值
   3:
     title: 参数city为重庆
     param: {'city': '重庆'}
