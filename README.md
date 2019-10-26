@@ -40,6 +40,7 @@
         pip install pytest                  pytest测试框架
         pip install allure-pytest           allure定制化测试报告库
         pip install jsonpath                JSON嵌套取值工具
+        pip install Pillow                  元素截图工具
 
     测试用例命名规范：
         1.unittest默认按照ASCII码顺序执行用例，故所有用例文件及用例方法以test打头，下划线加小写字母或数字，升序命名。

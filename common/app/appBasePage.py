@@ -26,7 +26,7 @@ class _OverrideWebForApp(WebBasePage):
     def find_element(self, locator):
         """
         传入定位器，定位当前页面第一个元素，返回元素对象
-        定位器格式采用'=>'符合分割，定位方式给定首字母即可，如ID定位示例："req=.elements()[1].cells()[2]"
+        定位器格式采用'=>'符合分割，定位方式给定首字母即可，如ID定位示例："i=su"
         :param locator: 定位器
         :return: element对象
         """
@@ -47,7 +47,7 @@ class _OverrideWebForApp(WebBasePage):
     def find_elements(self, locator: str):
         """
         传入定位方式选择器，定位当前页面所有元素，返回元素对象
-        选择器格式采用'=>'符合分割，定位方式给定首字母即可，如ID定位示例："req=.elements()[1].cells()[2]"
+        选择器格式采用'=>'符合分割，定位方式给定首字母即可，如ID定位示例："i=su"
         :param locator: 定位器
         :return: elements对象列表
         """

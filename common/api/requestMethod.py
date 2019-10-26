@@ -97,7 +97,7 @@ class SendRequest(_RequestsConfig):
 
     def __del__(self):
         """
-        每个实例对象使用完毕后，自动释放session
+        每个实例对象使用完毕后，释放session
         :return: None
         """
         self._session.close()
@@ -189,10 +189,7 @@ class SendRequest(_RequestsConfig):
         :return: 预期结果
         """
         excepted = self._api.get(case_number).get('excepted')
-        if excepted is not None:
-            return excepted
-        else:
-            return {}
+        return excepted if excepted is not None else {}
 
     @property
     def current_data(self):
@@ -215,7 +212,7 @@ class SendRequest(_RequestsConfig):
         :return: 替换后的字典格式参数
         """
         context = Context()
-        p = r"\$[\(（](.*?)[\)）]"
+        p = re.compile(r"\$[(（](.*?)[)）]")
         key_list = re.findall(p, str(param))
         if key_list:
             for key in key_list:

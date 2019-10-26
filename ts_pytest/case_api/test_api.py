@@ -8,30 +8,20 @@
 # @About:   PYTEST框架执行API测试主程序
 
 import os
+import sys
+c_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(os.path.dirname(c_path)))
+
 import allure
 import pytest
 import yaml
 
 from common import constant
-from common.api.apiOperateExcel import BackFillToExcel, \
-    BackupOrNewFile, AnalyzeResults
+from common.api.apiOperateExcel import BackFillToExcel
 from common.api.dataCompare import DataCompare
 from common.api.requestMethod import SendRequest
 from common.logger import Logger
 from common.operateConfig import OperateConfig
-
-
-@pytest.fixture(scope='session', name='bar')
-def backup_and_analyze_results():
-    """
-    全局fixture，备份以及分析测试结果excel
-    :return: None
-    """
-    backup = BackupOrNewFile()
-    backup.backup_result_file()
-    backup.create_result_file()
-    yield
-    AnalyzeResults().exec_analysis()
 
 
 def read_pytest_apis(filename_keyword=None):
@@ -81,11 +71,10 @@ def test_main_api(api_name, api):
     req = SendRequest(api_dict=api)
     # 获取当前接口全部用例编号
     case_nums = [key for key in api.keys() if isinstance(key, int)]
-    case_nums.sort()
     failure_results = []
     back_fill = BackFillToExcel()
     # 循环执行当前接口每个用例
-    for case in case_nums:
+    for case in sorted(case_nums):
         logger.info('{}准备执行第{}个用例{}'.format('-' * 25, case, '-' * 25))
         response = req.request(case)
         excepted = req.excepted(case)
@@ -128,8 +117,4 @@ def test_main_api(api_name, api):
 
 if __name__ == '__main__':
     # 执行测试，生成报告
-    pytest.main(['-s', '-q', 'test_api.py', '--alluredir', constant.allure_report_xml])
-    cmd = '{}:&cd {}&allure generate {} -o {} --clean'.format(
-        constant.allure_cmd_path.split(':')[0], constant.allure_cmd_path,
-        constant.allure_report_xml, constant.allure_report_html)
-    os.system(cmd)
+    pytest.main(['-s', '-q', 'test_api.py'])

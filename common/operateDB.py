@@ -57,6 +57,8 @@ class DBOracle:
         self._conn.close()
         self._log.info('成功断开数据库')
 
+    def __del__(self): self.disconnect()
+
     def select_all(self, sql_string: str):
         """
         执行查询sql
@@ -261,6 +263,8 @@ class DBMySql:
         """
         self._conn.close()
         self._log.info('成功断开数据库')
+
+    def __del__(self): self.disconnect()
 
     def select_all(self, sql_string: str):
         """
