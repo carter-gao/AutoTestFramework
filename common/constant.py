@@ -16,7 +16,6 @@ config_pro_api = join(join(__base_path, 'config'), 'pro_api.ini')
 config_pro_web = join(join(__base_path, 'config'), 'pro_web.ini')
 config_pro_app = join(join(__base_path, 'config'), 'pro_app.ini')
 context_data_path = join(join(__base_path, 'config'), 'context_data.ini')
-config_exception_path = join(join(__base_path, 'config'), 'config_exception.ini')
 # 日志文件目录
 log_path = join(__base_path, 'logs')
 # 浏览器驱动文件目录

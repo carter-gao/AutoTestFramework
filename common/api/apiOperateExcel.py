@@ -14,175 +14,10 @@ import openpyxl
 from openpyxl.chart.series import DataPoint
 from openpyxl.chart import PieChart, Reference, BarChart
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
-from openpyxl.utils import column_index_from_string, get_column_letter
+from openpyxl.utils import get_column_letter
 
 from common import constant
 from common.logger import Logger
-
-
-# -------------------------------------------------------------------------------------
-# 测试数据设计规范：
-# 1.建议同类接口，如所属一个大类或一个页面的，集中在一个excel文件存放
-# 2.单个excel文件内，不同接口的数据各用一个独立的sheet页，sheet页以接口名命名
-# 3.excel文件名和sheet名全部由英文和下划线命名，尽量不要有空格
-# 4.第一行存放一些该接口描述性说明
-# 5.测试数据设计，从A3开始，A列存放用例名称，B列记录预期状态码，C列存放接口url
-# 6.从D列开始，第2行列出所有参数名，第3行开始设计数据
-# 7.必传参数设置单元格背景色加深
-# 8.需要程序生成的参数留空，待调用公共函数生成，如MD5加密参数，动态时间戳等
-# 9.参数名称大小写请务必准确，代码读取的excel值会直接生成字典作为接口入参
-# 10.长串数字数据一定要设置单元格格式为文本，避免数据读取错误
-# 11.数字0比较特殊，需要设置单元格格式为文本，否正excel读取到的是空值
-# 12.第二列预期状态码设置单元格格式为文本，否则以0开头的会被当做数字处理，自动去掉0
-# -------------------------------------------------------------------------------------
-
-# 给定常量，起始参数行，起始参数列，参数名所在行，更改常量值代码自适应
-START_PARAMETER_ROW = 3
-START_PARAMETER_COLUMN = 'D'
-PARAMETER_NAME_ROW = 2
-
-
-class ReadExcel:
-    """
-    实例化需指定两个入参
-    :param excel_name: excel文件名，带格式
-    :param sheet_name: sheet页名
-    """
-
-    def __init__(self, excel_name, sheet_name):
-        # 引用日志类
-        self._log = Logger('读取API测试数据').get_logger()
-
-        self._excel_name = excel_name
-        self._sheet_name = sheet_name
-
-        # 打开excel，并转到指定的sheet页，返回WorkSheet对象
-        self._wb = openpyxl.load_workbook(os.path.join(constant.api_data_path, self._excel_name), read_only=True)
-        self._ws = self._wb[self._sheet_name]
-
-        self._log.info('成功打开测试用例Excel：{}'.format(self._excel_name))
-        self._log.info('成功定位测试用例Sheet：{}'.format(self._sheet_name))
-
-        # 初始化获取当前API相关信息
-        self.api_name = self._get_api_name()
-        self.api_url = self._get_api_url()
-        self._all_case_names = self._get_case_names()
-        self._all_except_codes = self._get_result_codes()
-
-        # 初始化自动获取所有测试数据字典和所有参数名列表
-        self._parameter_list = self._get_parameter_list()
-        self._all_data = self._get_all_data()
-
-    def get_current_case_data(self, case_number):
-        """
-        获取当前用例的测试数据
-        :param case_number: 用例编号
-        :return: 参数名与数据一一对应的字典
-        """
-        current_case_data = self._all_data[int(case_number)]
-        current_case_data_dict = {
-            self._parameter_list[i]: current_case_data[i]
-            for i in range(len(self._parameter_list))
-        }
-        self._log.debug('成功获取到第{}个用例数据：{}'.format(case_number, current_case_data_dict))
-        return current_case_data_dict
-
-    def get_current_case_name(self, case_number):
-        """
-        获取当前用例名
-        :param case_number: 用例编号
-        :return: 用例名
-        """
-        return self._all_case_names[int(case_number)]
-
-    def get_current_case_code(self, case_number):
-        """
-        获取当前用例预期状态码
-        :param case_number: 用例编号
-        :return: 预期状态码
-        """
-        return str(self._all_except_codes[int(case_number)]).strip()
-
-    def _get_api_url(self):
-        """
-        获取url
-        :return: URL
-        """
-        # 参数起始列左边的cell就是url，都是相同的，获取一个即可
-        url_column_num = column_index_from_string(START_PARAMETER_COLUMN) - 1
-        api_url = self._ws.cell(row=START_PARAMETER_ROW, column=url_column_num).value.strip()
-        self._log.debug('成功获取到当前接口地址：{}'.format(api_url))
-        return api_url
-
-    def _get_api_name(self):
-        """
-        获取接口名
-        :return: 接口名
-        """
-        api_name = self._ws['A1'].value
-        self._log.debug('成功获取到当前接口名称：{}'.format(api_name))
-        return api_name
-
-    def _get_result_codes(self):
-        """
-        获取预期异常码，返回字典
-        :return: {1: code1,2: code2,...}，数字表示第几个用例
-        """
-        sheet_max_row = self._ws.max_row
-        code_column_num = column_index_from_string(START_PARAMETER_COLUMN) - 2
-        expect_result_codes = {}
-        for row in range(START_PARAMETER_ROW, sheet_max_row + 1):
-            expect_result_codes[row - PARAMETER_NAME_ROW] = self._ws.cell(row, code_column_num).value
-        self._log.debug('成功获取到当前接口全部用例的预期状态码：{}'.format(expect_result_codes))
-        return expect_result_codes
-
-    def _get_case_names(self):
-        """
-        获取所有测试用例名称，返回字典
-        :return: {1: case1,2: case2,...}，数字表示第几个用例
-        """
-        sheet_max_row = self._ws.max_row
-        names_column_num = column_index_from_string(START_PARAMETER_COLUMN) - 3
-        case_name_dict = {}
-        for row in range(START_PARAMETER_ROW, sheet_max_row + 1):
-            case_name_dict[row - PARAMETER_NAME_ROW] = self._ws.cell(row, names_column_num).value
-        self._log.debug('成功获取到当前接口全部用例：{}'.format(case_name_dict))
-        return case_name_dict
-
-    def _get_all_data(self):
-        """
-        获取sheet页内全部测试数据（不包含用例名、url、参数名），返回字典
-        :return: 字典，如{1: ['appRecommend', '', '', ''], 2: ['appRecommend', '', '', ''],...}
-                1，2代表对应的测试用例编号，自上而下按顺序，列表是其对应测试数据
-        """
-        sheet_max_row = self._ws.max_row
-        sheet_max_column = self._ws.max_column
-        start_column = column_index_from_string(START_PARAMETER_COLUMN)
-        all_data = {}
-        for row in range(START_PARAMETER_ROW, sheet_max_row + 1):
-            every_line = []
-            for column in range(start_column, sheet_max_column + 1):
-                # 读取excel若为空值，返回None，None在python中是独立的值，字典需要''，做个判断
-                if self._ws.cell(row, column).value:
-                    every_line.append(self._ws.cell(row, column).value)
-                else:
-                    every_line.append('')
-            all_data[row - PARAMETER_NAME_ROW] = every_line
-        self._log.debug('成功获取到当前接口全部测试数据：{}'.format(all_data))
-        return all_data
-
-    def _get_parameter_list(self):
-        """
-        按excel行顺序获取全部参数名，返回列表
-        :return: 参数列表
-        """
-        sheet_max_column = self._ws.max_column
-        start_column = column_index_from_string(START_PARAMETER_COLUMN)
-        parameter_list = []
-        for column in range(start_column, sheet_max_column + 1):
-            parameter_list.append(self._ws.cell(PARAMETER_NAME_ROW, column).value.strip())
-        self._log.debug('成功获取到当前接口全部参数：{}'.format(parameter_list))
-        return parameter_list
 
 
 # ----------------------------------------------------------------------------------------
@@ -344,7 +179,6 @@ class BackFillToExcel:
             self._wb.save(self._path)
         except PermissionError as e:
             self._log.error('保存失败！！EXCEL文件被打开，请关闭后重新执行测试：{}'.format(e))
-            # raise PermissionError(e)
         else:
             self._log.debug('成功保存当前用例测试结果。')
 
@@ -406,15 +240,8 @@ class BackFillToExcel:
         :param excepted_result: 预期结果
         :return: None
         """
-        # 一个用例可能不止一条断言，先取出已写入的预期结果，与新的预期结果拼接后再赋值给单元格
-        old_result = self._ws.cell(self._ws.max_row, EXPECTED_RESULT_COL).value
-        # 单元格为空值时，读取到的是None，做个判断
-        if old_result is None:
-            new_result = str(excepted_result)
-        else:
-            new_result = old_result + '\n' + str(excepted_result)
-        self._ws.cell(self._ws.max_row, EXPECTED_RESULT_COL).value = new_result
-        self._log.debug('成功回写当前用例预期结果：{}'.format(", ".join(new_result.split('\n'))))
+        self._ws.cell(self._ws.max_row, EXPECTED_RESULT_COL).value = str(excepted_result)
+        self._log.debug('成功回写当前用例预期结果：{}'.format(excepted_result))
 
     def fill_compare_result(self, compare_result):
         """
@@ -434,7 +261,6 @@ class BackFillToExcel:
         :param response: JSON
         :return: None
         """
-        # json数据无法直接插入excel，需要转换为字符串
         self._ws.cell(self._ws.max_row, RESPONSE_COL).value = str(response)
         self._log.debug('成功回写当前用例返回结果：{}'.format(response))
 
@@ -444,7 +270,6 @@ class BackFillToExcel:
         :param curr_case_data: 测试数据
         :return: None
         """
-        # dict数据无法直接插入excel，需要转换为字符串
         self._ws.cell(self._ws.max_row, CASE_DATA_COL).value = str(curr_case_data)
         self._log.debug('成功回写当前用例测试数据：{}'.format(curr_case_data))
 
@@ -457,7 +282,7 @@ class BackFillToExcel:
         fill = PatternFill(fill_type='solid', fgColor="FF0000")
         for col in range(API_NAME_COL, CASE_DATA_COL + 1):
             self._ws.cell(row, col).fill = fill
-        self._log.debug('成功标记当前执行失败的用例行为红色')
+        self._log.debug('当前用例执行失败标记为红色！')
 
     def _merge_cells_before_save(self):
         """

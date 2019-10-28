@@ -108,36 +108,6 @@ class Context:
         self._log.info('成功写回关联参数：{} = {}'.format(option, value))
 
 
-class ReadConfigException:
-    """
-    接口测试用，读取异常配置文件
-    """
-    def __init__(self):
-        self._cg = configparser.ConfigParser()
-        self._cg.read(constant.config_exception_path.encode('utf-8'))
-        self._log = Logger('读取异常配置').get_logger()
-
-    def get_except_codes(self):
-        """
-        获取异常码
-        :return: 异常码元组
-        """
-        options = self._cg.options('EXCEPTION')
-        codes = tuple(options)
-        self._log.debug('获取到全部异常状态码')
-        return codes
-
-    def get_exceptions(self):
-        """
-        获取异常信息
-        :return: 与异常码一一对应的返回字典
-        """
-        options = self._cg.options('EXCEPTION')
-        exceptions = {option: self._cg.get('EXCEPTION', option) for option in options}
-        self._log.debug('获取到全部异常配置信息')
-        return exceptions
-
-
 if __name__ == '__main__':
     # co = Context()
     # co.write('K3', '哈哈滴滴')

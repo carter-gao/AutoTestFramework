@@ -24,10 +24,10 @@ class Email:
     """
     发送邮件，主函数：send_email()
     :param report_file: 测试报告文件名，供解析，并发送带附件的HTML邮件
-    :param result_file: 是否发送API测试结果附件，默认为False，若需要发送该附件，传入True
+    :param if_result_file: 是否发送API测试结果附件，默认为False，若需要发送该附件，传入True
     """
 
-    def __init__(self, report_file, result_file=False):
+    def __init__(self, report_file, if_result_file=False):
         # 获取邮件配置
         self._email = OperateConfig(constant.config_common_path)
         self._s_mtp = self._email.get_str('email', 's_mtp')
@@ -37,7 +37,7 @@ class Email:
         self._authorization_code = self._email.get_str('email', 'authorization_code')
 
         self._report_name = report_file
-        self._result_file = result_file
+        self._result_file = if_result_file
 
     def _login_mailbox(self):
         """

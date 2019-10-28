@@ -12,9 +12,8 @@ from unittest import TestCase
 
 from common.logger import Logger
 from common.dataFactory import FakeData
-from common.operateConfig import Context
-from common.api.dataCompare import DataCompare
 from common.api.apiOperateExcel import BackFillToExcel
+from common.api.dataCompare import DataCompare
 
 
 class BaseTestCase(TestCase):
@@ -29,8 +28,6 @@ class BaseTestCase(TestCase):
         cls.log.info('{}开始执行{}'.format('=' * 50, '=' * 50))
         # 引用随机数据生成类
         cls.faker = FakeData()
-        # 引用关联参数读写类
-        cls.context = Context()
         # 引用测试结果回写类
         cls.back_fill = BackFillToExcel()
         # 创建生成器，返回一个迭代器，用于测试用例计数
@@ -50,9 +47,6 @@ class BaseTestCase(TestCase):
         self.back_fill.fill_case_number(self.count)
         # 默认回写判定结果为SUCCESS，后续由断言方法改写
         self.back_fill.fill_judgement_result()
-
-    # def tearDown(self) -> None:
-    #     self.log.info('{}第{}个用例执行完毕{}'.format('-' * 25, self.count, '-' * 25))
 
     @property
     def timestamp(self):

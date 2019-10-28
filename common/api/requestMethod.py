@@ -112,7 +112,7 @@ class SendRequest(_RequestsConfig):
         self._log.info('用例名称：{}'.format(self._api.get(case_number).get('title')))
         parameters = self._api.get('parameters')
         param = self._api.get(case_number).get('param')
-        # 判空，若为无参数接口，则不做处理
+        # 判空，若为无参接口，则不做处理
         if param or parameters:
             # update或赋值参数
             if parameters:

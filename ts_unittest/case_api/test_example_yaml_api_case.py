@@ -18,7 +18,6 @@ class ExampleApiCase(BaseTestCase):
         cls.req = SendRequest(cls.api)
 
     def tearDown(self) -> None:
-        # super().tearDown()
         # 在每个用例执行完毕时完成剩余的回写任务
         self.back_fill.fill_api_name(self.api.get('name'))
         self.back_fill.fill_api_url(self.api.get('url'))

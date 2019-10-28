@@ -1,7 +1,14 @@
 # coding:utf-8
+
+"""
+unittest用例示例！
+"""
+
+import os
 import time
 import unittest
 from packages.HTMLTestRunner import HTMLTestRunner
+from common.constant import report_path
 
 
 # 计算机
@@ -102,11 +109,12 @@ class TestDiv(unittest.TestCase):
 
 
 if __name__ == '__main__':
+
     test_dir = '.'
     discover = unittest.defaultTestLoader.discover(test_dir, pattern='Calculator_*.py', top_level_dir=None)
     # 定义报告路径
-    now = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-    reportPath = '..\\results\\' + now + ' Calculator Result.html'
+    now = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime())
+    reportPath = os.path.join(report_path, now + ' Calculator Result.html')
     fp = open(reportPath, 'wb')
     # 定义测试报告
     runner = HTMLTestRunner(stream=fp,
