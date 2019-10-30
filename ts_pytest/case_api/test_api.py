@@ -12,15 +12,16 @@ import sys
 c_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(c_path)))
 
+import re
 import allure
 import pytest
 import yaml
 
 from common import constant
+from common.logger import Logger
 from common.api.apiOperateExcel import BackFillToExcel
 from common.api.dataCompare import DataCompare
 from common.api.requestMethod import SendRequest
-from common.logger import Logger
 from common.operateConfig import OperateConfig
 
 
@@ -35,8 +36,9 @@ def read_pytest_apis(filename_keyword=None):
     for folder, subFolders, files in os.walk(constant.api_data_path):
         for file in files:
             if filename_keyword:
-                if file.endswith('.yaml') and filename_keyword in file:
-                    paths.append(os.path.join(folder, file))
+                for fk in re.split(r"[,，\s]+", filename_keyword):
+                    if file.endswith('.yaml') and fk in file:
+                        paths.append(os.path.join(folder, file))
             else:
                 if file.endswith('.yaml'):
                     paths.append(os.path.join(folder, file))
@@ -45,14 +47,14 @@ def read_pytest_apis(filename_keyword=None):
         with open(filename) as fp:
             reader = fp.read()
         all_api = yaml.load(reader, Loader=yaml.FullLoader)
-        for main_key, api in all_api.items():
-            if 'pytest' in main_key:
+        for key, api in all_api.items():
+            if 'pytest' in key:
                 apis.append((api.get('name'), api))
     return apis
 
 
 kw = OperateConfig(constant.config_pro_api).get_str('project', 'filename_keyword')
-_all_api = read_pytest_apis(filename_keyword=kw)
+_all_api = read_pytest_apis(kw)
 logger = Logger('执行API测试').get_logger()
 
 

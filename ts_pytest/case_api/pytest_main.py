@@ -6,7 +6,7 @@ pytest执行接口用例主程序：
 """
 import os
 import sys
-# 命令行执行时，需将项目主目录假如python path，否则会报错
+# 命令行执行时，需将项目主目录加入python path，否则会报错
 c_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(c_path)))
 

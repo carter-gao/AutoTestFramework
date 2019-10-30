@@ -15,9 +15,9 @@ from common.constant import config_pro_api
 from common.operateConfig import OperateConfig
 
 
+kws = OperateConfig(config_pro_api).get_str('project', 'filename_keyword')
 # 只在全量测试或测试example模块时执行，否则跳过
-@unittest.skipUnless(OperateConfig(config_pro_api).get_str('project', 'filename_keyword')
-                     in ('example', ''), '此接口只在全量测试或测试example模块时执行')
+@unittest.skipUnless(kws == '' or 'example' in kws, '此接口只在全量测试或单独指定时执行!')
 class TestExampleApiCase(BaseTestCase):
 
     @classmethod

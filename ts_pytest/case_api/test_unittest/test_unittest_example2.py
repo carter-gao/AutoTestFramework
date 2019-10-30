@@ -15,21 +15,17 @@ from common.constant import config_pro_api
 from common.operateConfig import OperateConfig
 
 
-# 只在全量测试或测试example模块时执行，否则跳过
-@unittest.skipUnless(OperateConfig(config_pro_api).get_str('project', 'filename_keyword')
-                     in ('example', ''), '此接口只在全量测试或测试example模块时执行')
+kws = OperateConfig(config_pro_api).get_str('project', 'filename_keyword')
+@unittest.skipUnless(kws == '' or 'example' in kws, '此接口只在全量测试或单独指定时执行!')
 class TestExampleApiCase(BaseTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        # 读取api信息
-        cls.api = ReadApi('example.yaml').read('2_pytest_weatherApi')    # 对于不同接口只需改动这一行
-        # 实例化请求类
+        cls.api = ReadApi('example.yaml').read('2_pytest_weatherApi')
         cls.req = SendRequest(cls.api)
 
     def tearDown(self) -> None:
-        # 在每个用例执行完毕时完成剩余的回写任务
         self.back_fill.fill_api_name(self.api.get('name'))
         self.back_fill.fill_api_url(self.api.get('url'))
         self.back_fill.fill_case_name(self.api.get(self.count).get('title'))
