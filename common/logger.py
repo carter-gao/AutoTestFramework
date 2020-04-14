@@ -38,7 +38,7 @@ class Logger:
             error_log_name = join(log_path, current_time + ' python error auto test.log')
 
             # 创建一个handler，用于写入全部日志
-            all_handler = logging.FileHandler(main_log_name)
+            all_handler = logging.FileHandler(main_log_name, encoding='utf-8')
             all_handler.setLevel(logLevel.AL_HANDLER)
 
             # 再创建一个handler，用于写入错误日志

@@ -35,7 +35,7 @@ class ReadLocator:
         :return: 指定页全部数据
         """
         path = os.path.join(constant.yaml_path, self._filename)
-        with open(path, 'req', encoding='utf-8') as fp:
+        with open(path, encoding='utf-8') as fp:
             reader = fp.read()
         all_result = yaml.load_all(reader, Loader=yaml.FullLoader)
         return list(all_result)[self._page_number - 1]
