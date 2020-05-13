@@ -10,32 +10,15 @@
 
 from selenium.common.exceptions import WebDriverException
 from appium.webdriver.extensions.android.network import NetSpeed
+from appium.webdriver.extensions.android.nativekey import AndroidKey
 
 from common.app.appBasePage import _AppBasePage
-from common.app.extensions.androidKeyCode import AndroidKeyCode
 
 
 class AndroidBasePage(_AppBasePage):
     """
     Android端页面对象基类
     """
-
-    def switch_content(self):
-        """
-        用于原生android应用与H5之间上下文(webview)切换
-        :return: None
-        """
-        contexts = self._driver.contexts
-        self._driver.switch_to.context(contexts[-1])
-        self._log.info('切换至页面：{}'.format(self._driver.current_context))
-
-    def open_notifications(self):
-        """
-        在Android中打系统通知栏(API级别18及以上)
-        :return: None
-        """
-        self._driver.open_notifications()
-        self._log.info('打开系统通知栏')
 
     def set_text(self, locator: str, text=''):
         """
@@ -50,6 +33,33 @@ class AndroidBasePage(_AppBasePage):
             self._log.info('向元素发送文本：{}'.format(text))
         else:
             self._log.info('清空元素的文本：{}'.format(element.text))
+
+    def switch_to_h5(self):
+        """
+        从原生切换至H5(webview)
+        :return: 若切换成功，返回True
+        """
+        contexts = self._driver.contexts
+        self._driver.switch_to.context(contexts[-1])
+        self._log.info('切换至H5页面：{}'.format(self._driver.current_context))
+        return self._driver.current_context != 'NATIVE_APP'
+
+    def switch_to_native(self):
+        """
+        从H5(webview)切换回原生
+        :return: 若切换成功，返回True
+        """
+        self._driver.switch_to.context("NATIVE_APP")
+        self._log.info('切换回原生页面：{}'.format(self._driver.current_context))
+        return self._driver.current_context == 'NATIVE_APP'
+
+    def open_notifications(self):
+        """
+        在Android中打系统通知栏(API级别18及以上)
+        :return: None
+        """
+        self._driver.open_notifications()
+        self._log.info('打开系统通知栏')
 
     @property
     def current_package(self):
@@ -69,7 +79,7 @@ class AndroidBasePage(_AppBasePage):
 
     def start_activity(self, app_package: str, app_activity: str, **opts):
         """
-        在测试期间打开另一个应用
+        在测试期间打开任意活动。如果活动属于另一个应用程序，启动该应用程序并打开活动。
         :param app_package: package
         :param app_activity: activity
         :param opts: dict参数，详细参数按住CTRL点击start_activity()方法看源码
@@ -77,21 +87,18 @@ class AndroidBasePage(_AppBasePage):
         """
         try:
             self._driver.start_activity(app_package, app_activity, **opts)
-            self._log.info('已启动应用：{}/{}'.format(app_package, app_activity))
+            self._log.info('应用启动成功：{}/{}'.format(app_package, app_activity))
         except WebDriverException as e:
-            self._log.debug('应用起始失败：{}'.format(e))
+            self._log.error('应用起动失败：{}'.format(e))
 
     def wait_activity(self, activity: str, timeout=10):
         """
-        阻塞测试，直至指定Activity运行或超时
+        等待指定Activity运行或超时
         :param activity: activity
         :param timeout: 超时时间，默认10秒
-        :return: None
+        :return: 若Activity运行成功返回True，否则返回False
         """
-        if self._driver.wait_activity(activity, timeout, interval=1):
-            self._log.info('{}已运行'.format(activity))
-        else:
-            self._log.error('{}运行超时'.format(activity))
+        return self._driver.wait_activity(activity, timeout, interval=1)
 
     @property
     def dpi(self):
@@ -105,7 +112,7 @@ class AndroidBasePage(_AppBasePage):
 
     def gsm(self, phone_number: str, action='call', strength=4, state='on'):
         """
-        用于安卓模拟器上打GSM电话
+        在安卓模拟器上模拟打GSM电话
         :param phone_number: 要拨打的号码
         :param action: 要执行的动作（'call','accept','cancel','hold'）
         :param strength: GSM信号强度，可选0(无信号)，1(弱)，2(中)，3(好)，4(极好)
@@ -115,7 +122,7 @@ class AndroidBasePage(_AppBasePage):
         self._driver.set_gsm_signal(strength)
         self._driver.set_gsm_voice(state)
         self._driver.make_gsm_call(phone_number, action)
-        self._log.info(f'拨打GSM电话：action={action}|strength={strength}|state={state}')
+        self._log.info(f'拨打GSM电话：action={action}|strength={strength}|state={state}，号码：{phone_number}')
 
     def finger_print(self, finger_id: int):
         """
@@ -126,29 +133,52 @@ class AndroidBasePage(_AppBasePage):
         self._driver.finger_print(finger_id)
         self._log.info('在Android模拟器上进行指纹识别')
 
-    def activate_sg_ime_engine(self):
+    @property
+    def available_ime_engines(self):
         """
-        调用搜狗输入法
-        :return: None
+        获取Android设备的可用输入法。
+        :return: list of package and activity. (e.g., ['com.android.inputmethod.latin/.LatinIME'])
         """
-        sg_engine = [engine for engine in self._driver.available_ime_engines if 'sogou' in engine]
-        if sg_engine:
-            self._driver.activate_ime_engine(sg_engine[0])
-            if sg_engine == self._driver.active_ime_engine:
-                self._log.info('调用搜狗输入法成功')
+        return self._driver.available_ime_engines
+
+    @property
+    def active_ime_engine(self):
+        """
+        获取Android设备当前运行的输入法
+        :return: package and activity. (e.g., 'com.android.inputmethod.latin/.LatinIME')
+        """
+        return self._driver.active_ime_engine
+
+    def is_ime_active(self):
+        """
+        检查设备是否已激活IME服务。
+        :return: bool
+        """
+        return self._driver.is_ime_active()
+
+    def activate_ime_engine(self, ime_activity_kw='sogou'):
+        """
+        激活设备上给定的IME引擎，调用指定输入法
+        :param ime_activity_kw: 指定输入法activity中的关键词，如默认搜狗输入法“sogou”
+        :return:
+        """
+        engine = [engine for engine in self._driver.available_ime_engines if ime_activity_kw in engine]
+        if engine:
+            self._driver.activate_ime_engine(engine[0])
+            if engine == self._driver.active_ime_engine:
+                self._log.info('输入法IME服务已启动')
             else:
-                self._log.error('调用搜狗输入法失败')
+                self._log.error('输入法IME服务启动失败')
         else:
-            self._log.error('搜狗输入法调用失败，可能原因：1.未安装，2.未启用IME服务'
-                            '请先下载安装，安装后进入搜狗输入法设置中开启IME服务')
+            self._log.warning('检测到设备未安装该输入法，请先下载安装，安装后进入输入法设置中开启IME服务。')
 
     def deactivate_sg_ime_engine(self):
         """
-        取消搜狗输入法调用
+        关闭设备上当前激活的IME引擎。
         :return: None
         """
-        if 'sogou' in self._driver.active_ime_engine:
-            self._driver.deactivate_ime_engine()
+        self._driver.deactivate_ime_engine()
+        self._log.info('输入法IME服务已关闭')
 
     @property
     def keys(self):
@@ -156,34 +186,31 @@ class AndroidBasePage(_AppBasePage):
         返回自定义安卓键盘Keys对象，配合安卓键盘操作方法使用
         :return: Keys对象
         """
-        return AndroidKeyCode
+        return AndroidKey
 
-    def key_event(self, keycode: int, meta_state=None):
+    def key_event(self, keycode):
         """
-        向设备发送一个键码，模拟键盘事件
+        向设备发送一个按键，模拟键盘事件
         :param keycode: 键码
-        :param meta_state: 有关正在发送的键码的元信息
         :return: None
         """
-        self._driver.keyevent(keycode, metastate=meta_state)
+        self._driver.keyevent(keycode)
         self.sleep(0.5)
-        self._log.info('向设备发送一个键码：{}'.format(keycode))
+        self._log.info('向设备发送一个按键：{}'.format(keycode))
 
-    def press_keycode(self, keycode: int, if_long=False, meta_state=None, flags=None):
+    def press_keycode(self, keycode, if_long=False):
         """
-        向设备发送一个键盘，按住该按键或长按
+        向设备发送一个按键，按住该按键或长按
         :param keycode: 键码
         :param if_long: bool，是否长按
-        :param meta_state: 有关正在发送的键码的元信息
-        :param flags: 键事件标志集
         :return: None
         """
         if not if_long:
-            self._driver.press_keycode(keycode, metastate=meta_state, flags=flags)
-            self._log.info('按住键码：{}'.format(keycode))
+            self._driver.press_keycode(keycode)
+            self._log.info('按住键：{}'.format(keycode))
         else:
-            self._driver.long_press_keycode(keycode, metastate=meta_state, flags=flags)
-            self._log.info('长按键码：{}'.format(keycode))
+            self._driver.long_press_keycode(keycode)
+            self._log.info('长按键：{}'.format(keycode))
 
     def toggle_location_services(self):
         """
@@ -229,7 +256,7 @@ class AndroidBasePage(_AppBasePage):
         """
         return NetSpeed
 
-    def set_network_speed(self, speed_type: str):
+    def set_network_speed(self, speed_type):
         """
         设置网络速度仿真，仅在安卓模拟器上使用
         :param speed_type: 网络速度，speed属性值
@@ -290,6 +317,4 @@ class AndroidBasePage(_AppBasePage):
         返回状态栏和导航栏的可见性和边界信息
         :return: 字典
         """
-        bars = self._driver.get_system_bars()
-        self._log.info('获取到系统状态栏和导航栏的可见性和边界信息：{}'.format(bars))
-        return bars
+        return self._driver.get_system_bars()

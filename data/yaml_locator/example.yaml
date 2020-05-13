@@ -1,4 +1,4 @@
-# ------------------------------------------------------------
+# ------------------------------- -----------------------------
 # 此YAML文件用于存放所有定位器
 # 多个页面的定位器使用'---'分割
 # 注：冒号必须用英文
@@ -18,11 +18,16 @@
 ## ANDROID
   # AU->ANDROID_UIAUTOMATOR
   # AV->ANDROID_VIEWTAG
-  # AD->ANDROID_DATA_MATCHER
+  # ------
+  # AD->ANDROID_DATA_MATCHER   -- # 这两种方式传参特殊，需单独调用
+  # AM->ANDROID_VIEW_MATCHER
+  # ------
 ## IOS
   # IU->IOS_UIAUTOMATION
   # IP->IOS_PREDICATE
   # IC->IOS_CLASS_CHAIN
+## WINDOWS
+  # WU->WINDOWS_UI_AUTOMATION
 # -----定位器映射-----
 # ------------------------------------------------------------
 

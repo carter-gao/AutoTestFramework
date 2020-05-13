@@ -11,10 +11,11 @@ from os.path import join, isfile, isdir
 from appium.webdriver.common.mobileby import MobileBy
 from appium.webdriver.common.multi_action import MultiAction
 from appium.webdriver.common.touch_action import TouchAction
+from appium.webdriver.applicationstate import ApplicationState
 from selenium.common import exceptions
 
-from common import constant
 from common.web.webBasePage import WebBasePage
+from common.constant import image_locator_main_path
 
 
 class _OverrideWebForApp(WebBasePage):
@@ -36,7 +37,7 @@ class _OverrideWebForApp(WebBasePage):
             if selector_by != 'IMAGE':
                 element = self._driver.find_element(select, selector_value)
             else:
-                img_path = join(constant.image_locator_path, selector_value)
+                img_path = join(image_locator_main_path, selector_value)
                 element = self._driver.find_element_by_image(img_path)
         except exceptions.NoSuchElementException as e:
             self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
@@ -57,7 +58,7 @@ class _OverrideWebForApp(WebBasePage):
             if selector_by != 'IMAGE':
                 elements = self._driver.find_elements(select, selector_value)
             else:
-                img_path = join(constant.image_locator_path, selector_value)
+                img_path = join(image_locator_main_path, selector_value)
                 elements = self._driver.find_elements_by_image(img_path)
         except exceptions.NoSuchElementException as e:
             self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
@@ -65,49 +66,8 @@ class _OverrideWebForApp(WebBasePage):
             self._log.info(f'通过{selector_by}={selector_value}成功定位到当前页面所有元素')
             return elements
 
-    def find_element_on_element(self, locator: str, element_obj):
-        """
-        在指定element对象上定位子元素
-        :param locator: 定位器
-        :param element_obj: element对象
-        :return: 子element对象
-        """
-        selector_by, selector_value = self._deal_locator(locator)
-        if selector_by not in ('ANDROID_VIEWTAG', 'CUSTOM', 'IMAGE'):
-            select = getattr(MobileBy, selector_by)
-            try:
-                element = element_obj.find_element(select, selector_value)
-            except exceptions.NoSuchElementException as e:
-                self._log.error(f'{selector_by}为{selector_value}的子元素定位失败：{e}')
-            else:
-                self._log.info(f'通过{selector_by}={selector_value}成功定位到子元素')
-                return element
-        else:
-            self._log.error(f'在元素上定位子集不支持{selector_by}方法，请确认。')
-            raise Exception(f'在元素上定位子集不支持{selector_by}方法，请确认。')
-
-    def find_elements_on_element(self, locator: str, element_obj):
-        """
-        在指定element对象上定位所有满足条件子元素
-        :param locator: 定位器
-        :param element_obj: element对象
-        :return: 子element对象列表
-        """
-        selector_by, selector_value = self._deal_locator(locator)
-        if selector_by not in ('ANDROID_VIEWTAG', 'CUSTOM', 'IMAGE'):
-            select = getattr(MobileBy, selector_by)
-            try:
-                elements = element_obj.find_elements(select, selector_value)
-            except exceptions.NoSuchElementException as e:
-                self._log.error(f'{selector_by}为{selector_value}的子元素定位失败：{e}')
-            else:
-                self._log.info(f'通过{selector_by}={selector_value}成功定位到子元素集')
-                return elements
-        else:
-            self._log.error(f'在元素上定位子集不支持{selector_by}方法，请确认。')
-            raise Exception(f'在元素上定位子集不支持{selector_by}方法，请确认。')
-
-    def get_window_size(self):
+    @property
+    def window_size(self):
         """
         获取手机屏幕大小
         :return: 宽，高
@@ -143,29 +103,6 @@ class _AppBasePage(_OverrideWebForApp):
         multi_actions.perform()
         self._log.info('执行多点触控操作')
 
-    def set_value(self, locator: str, value, if_on_element=True):
-        """
-        设置应用程序中元素的值
-        :param locator: 定位器
-        :param value: 值
-        :param if_on_element: 传True调用element对象方法，传False调用driver对象方法
-        :return: None
-        """
-        element = self.find_element(locator)
-        if if_on_element:
-            element.set_value(value)
-        else:
-            self._driver.set_value(element, value)
-        self._log.info('给元素设置值：{}'.format(value))
-
-    @property
-    def battery_info(self):
-        """
-        获取设备电池信息
-        :return: 设备电池信息
-        """
-        return self._driver.battery_info
-
     def location_in_view(self, locator: str):
         """
         获取元素相对于视图的位置
@@ -177,12 +114,23 @@ class _AppBasePage(_OverrideWebForApp):
         self._log.info(f'当前元素相对于视图位置为:({location})')
         return location
 
-    def scroll(self, origin_locator: str, destination_locator: str, duration=600):
+    def set_value(self, locator: str, value):
+        """
+        设置应用程序中元素的值
+        :param locator: 定位器
+        :param value: 值
+        :return: None
+        """
+        element = self.find_element(locator)
+        self._driver.set_value(element, value)
+        self._log.info('给元素设置值：{}'.format(value))
+
+    def scroll(self, origin_locator: str, destination_locator: str, duration=None):
         """
         滚动操作，从一个元素滚动至另一个元素
         :param origin_locator: 起始元素定位器
         :param destination_locator: 终点元素定位器
-        :param duration: 持续时间，默认600ms
+        :param duration: 持续时间，默认None
         :return: None
         """
         origin_el = self.find_element(origin_locator)
@@ -202,17 +150,17 @@ class _AppBasePage(_OverrideWebForApp):
         self._driver.drag_and_drop(origin_el, destination_el)
         self._log.info('把元素（{}）拖拽至元素（{}）'.format(origin_el.id, destination_el.id))
 
-    def tap(self, positions: list, duration=500):
+    def tap(self, positions: list, duration=None):
         """
         多手指点击，最多用五根手指轻敲一个特定的地方，保持特定的时间
         :param positions: 坐标，传入元组列表，最多5个点，如 [(100, 20), (100, 60), (100, 100)]
-        :param duration: 持续时间，默认500ms
+        :param duration: 持续时间，单位ms
         :return: None
         """
         self._driver.tap(positions, duration)
         self._log.info('多指点击坐标：{}，持续：{}毫秒'.format(positions, duration))
 
-    def swipe_or_flick(self, start_xy: tuple, end_xy: tuple, duration: float):
+    def swipe(self, start_xy: tuple, end_xy: tuple, duration=None):
         """
         滑动操作，按坐标滑动，若设置持续时间，相当于swipe()方法；若不设置，相当于flick()方法
         :param start_xy: 起始坐标元组，如（x, y）
@@ -222,10 +170,9 @@ class _AppBasePage(_OverrideWebForApp):
         """
         if duration:
             self._driver.swipe(start_xy[0], end_xy[0], start_xy[1], end_xy[1], duration)
-            self._log.info('从{}滑动至{}'.format(start_xy, end_xy))
         else:
             self._driver.flick(start_xy[0], end_xy[0], start_xy[1], end_xy[1])
-            self._log.info('从{}弹至{}'.format(start_xy, end_xy))
+        self._log.info('从{}滑动至{}'.format(start_xy, end_xy))
 
     def swipe_left(self, number_of_times=1):
         """
@@ -313,7 +260,7 @@ class _AppBasePage(_OverrideWebForApp):
         pinch_action.perform()
         self._log.info('缩小屏幕')
 
-    def background_app(self, seconds: float):
+    def background_app(self, seconds: int):
         """
         将当前应用置于后台模式一段时间
         :param seconds: 秒
@@ -324,15 +271,15 @@ class _AppBasePage(_OverrideWebForApp):
 
     def is_app_installed(self, bundle_id: str):
         """
-        通过app唯一识别id》bundle_id来判断其是否已被安装
+        通过app的bundle_id来判断其是否已被安装
         :param bundle_id: app唯一识别id
         :return: bool, 若已安装返回True
         """
         if self._driver.is_app_installed(bundle_id):
-            self._log.info('此app已安装：bundle_id = {}'.format(bundle_id))
+            self._log.info('此应用已安装：bundle_id = {}'.format(bundle_id))
             return True
         else:
-            self._log.info('此app未安装：bundle_id = {}'.format(bundle_id))
+            self._log.info('此应用未安装：bundle_id = {}'.format(bundle_id))
             return False
 
     def install_app(self, app_path: str, if_android=True):
@@ -347,7 +294,8 @@ class _AppBasePage(_OverrideWebForApp):
                 'replace': True,                # 是否覆盖安装，默认True
                 'timeout': 60000,               # 超时时间，默认60000ms
                 'allowTestPackages': True,      # 是否允许安装标带有测试标记的软件包
-                'grantPermissions': True        # 是否自动授予应用程序权限
+                'grantPermissions': True,       # 是否自动授予应用程序权限
+                'useSdcard': False              # 是否使用SD卡，默认False
             }
             self._driver.install_app(app_path, options)
         else:
@@ -369,34 +317,61 @@ class _AppBasePage(_OverrideWebForApp):
             self._driver.remove_app(app_id, options)
         else:
             self._driver.remove_app(app_id)
-        self._log.info('卸载指定应用：app_id = {}'.format(app_id))
+        self._log.info('卸载应用：app_id = {}'.format(app_id))
 
-    def launch_or_close(self, if_launch: bool):
+    def launch_app(self):
         """
-        运行或关闭在desired_capabilities参数中指定的应用（即测试应用）
-        :param if_launch: True 运行，False 关闭
+        运行在desired_capabilities参数中指定的应用（即测试应用）
         :return: None
         """
-        if if_launch:
-            self._driver.launch_app()
-            self._log.info('启动被测应用...')
-        else:
-            self._driver.close_app()
-            self._log.info('关闭被测应用...')
+        self._driver.launch_app()
+        self._log.info('启动被测应用...')
 
-    def activate_or_terminate(self, app_id, if_activate: bool):
+    def close_app(self):
         """
-        通过app唯一识别id来激活或终止app
+        关闭在desired_capabilities参数中指定的应用（即测试应用）
+        :return: None
+        """
+        self._driver.close_app()
+        self._log.info('关闭被测应用...')
+
+    def query_app_state(self, app_id: str):
+        """
+        查询指定app_id的应用的状态
         :param app_id: app_id
-        :param if_activate: True 激活，False 终止
-        :return: None
+        :return: 应用状态
         """
-        if if_activate:
+        return self._driver.query_app_state(app_id)
+
+    def terminate_app(self, app_id: str):
+        """
+        如果应用程序正在运行，则终止该应用程序。
+        :param app_id: 应用id
+        :return: 若终止成功返回True
+        """
+        if self._driver.query_app_state(app_id) in (
+                ApplicationState.RUNNING_IN_BACKGROUND,
+                ApplicationState.RUNNING_IN_BACKGROUND_SUSPENDED,
+                ApplicationState.RUNNING_IN_FOREGROUND
+        ):
+            true_or_false = self._driver.terminate_app(app_id)
+            if true_or_false:
+                self._log.info('应用已终止：app_id={}'.format(app_id))
+                return true_or_false
+
+    def activate_app(self, app_id: str):
+        """
+        如果应用程序未运行，或正在后台运行，则激活该应用程序。
+        :param app_id: 应用id
+        :return: 若激活成功返回True
+        """
+        if self._driver.query_app_state(app_id) in (
+                ApplicationState.RUNNING_IN_BACKGROUND,
+                ApplicationState.RUNNING_IN_BACKGROUND_SUSPENDED,
+                ApplicationState.NOT_RUNNING
+        ):
             self._driver.activate_app(app_id)
-            self._log.info('激活应用：app_id = {}'.format(app_id))
-        else:
-            self._driver.terminate_app(app_id)
-            self._log.info('终止应用成功：app_id = {}'.format(app_id))
+            self._log.info('应用已激活：app_id={}'.format(app_id))
 
     def reset(self):
         """
@@ -405,16 +380,6 @@ class _AppBasePage(_OverrideWebForApp):
         """
         self._driver.reset()
         self._log.info('重置当前应用')
-
-    def query_app_state(self, app_id):
-        """
-        查询指定app_id的应用的状态
-        :param app_id: app_id
-        :return: 应用状态
-        """
-        status = self._driver.query_app_state(app_id)
-        self._log.info('app_id={}的应用状态：{}'.format(app_id, status))
-        return status
 
     def app_strings(self, language=None):
         """
@@ -444,7 +409,7 @@ class _AppBasePage(_OverrideWebForApp):
 
     def get_device_time(self, format_=None):
         """
-        获取设备时间，可知道时间格式
+        获取设备时间，可指定时间格式
         :param format_: 时间格式
         :return: 设备时间
         """
@@ -452,22 +417,30 @@ class _AppBasePage(_OverrideWebForApp):
         self._log.info('获取到当前设备系统时间：{}'.format(date_time))
         return date_time
 
-    def lock_or_unlock(self, if_lock: bool, seconds=None):
+    @property
+    def battery_info(self):
         """
-        锁定设备几秒或解锁设备
-        :param if_lock: True 锁定，False 解锁
-        :param seconds: 秒
+        获取设备电池信息
+        :return: 设备电池信息
+        """
+        return self._driver.battery_info
+
+    def lock(self, seconds=None):
+        """
+        锁定设备
+        :param seconds: 锁定时间，秒
         :return: None
         """
-        if if_lock:
-            self._driver.lock(seconds)
-            if seconds:
-                self._log.info('锁定设备{}秒'.format(seconds))
-            else:
-                self._log.info('锁定设备')
-        else:
-            self._driver.unlock()
-            self._log.info('解锁设备')
+        self._driver.lock(seconds)
+        self._log.info('锁定设备')
+
+    def unlock(self):
+        """
+        解锁设备
+        :return: None
+        """
+        self._driver.unlock()
+        self._log.info('解锁设备')
 
     def is_locked(self):
         """
@@ -489,10 +462,17 @@ class _AppBasePage(_OverrideWebForApp):
         self._driver.shake()
         self._log.info('摇一摇设备')
 
+    def is_keyboard_shown(self):
+        """
+        尝试检测是否存在软件键盘。
+        :return: bool
+        """
+        return self._driver.is_keyboard_shown()
+
     def hide_keyboard(self, if_android: bool, key_name=None, key=None):
         """
         隐藏设备上的软件键盘，对于安卓，不需要任何参数直接调用即可；对于iOS，需要传入两个可用参数
-        :param if_android: bool，True为安卓，False为IOS
+        :param if_android: bool，True为Android，False为IOS
         :param key_name: 一个键名
         :param key: 一个特殊键
         :return: None
@@ -509,12 +489,12 @@ class _AppBasePage(_OverrideWebForApp):
     @property
     def location_geography(self):
         """
-        检索当前地理位置信息
+        获取当前地理位置信息
         :return: 返回包含经度，纬度，海拔的字典
         """
         return self._driver.location
 
-    def set_location(self, latitude: float, longitude: float, altitude: float):
+    def set_location(self, latitude: float, longitude: float, altitude=None):
         """
         设置设备的位置信息
         :param latitude: 经度
@@ -525,7 +505,7 @@ class _AppBasePage(_OverrideWebForApp):
         self._driver.set_location(latitude, longitude, altitude)
         self._log.info(f'设置设备的位置信息：经度（{latitude}）纬度（{longitude}）海拔（{altitude}）')
 
-    def pull(self, path: str):
+    def pull_file_or_folder(self, path: str):
         """
         从设备上的指定路径读取文件并编码为Base64
         :param path: 设备上的文件路径或文件夹路径
@@ -536,7 +516,7 @@ class _AppBasePage(_OverrideWebForApp):
             bytes_content = self._driver.pull_file(path)
         elif isdir(path):
             bytes_content = self._driver.pull_folder(path)
-        self._log.info('从设备指定路径读取到文件：{}'.format(path))
+        self._log.info('从设备读取到文件：{}'.format(path))
         return bytes_content
 
     def push_file(self, destination_path, local_path: str):
@@ -562,10 +542,11 @@ class _AppBasePage(_OverrideWebForApp):
         """
         结束屏幕录制
         :param options: 关键字参数
-        :return: None
+        :return: bytes，编码为Base64的视频文件
         """
-        self._driver.stop_recording_screen(**options)
+        screen_content = self._driver.stop_recording_screen(**options)
         self._log.info('结束屏幕录制...')
+        return screen_content
 
     @property
     def current_settings(self):
@@ -584,4 +565,4 @@ class _AppBasePage(_OverrideWebForApp):
         :return: None
         """
         self._driver.update_settings(settings)
-        self._log.info('重设当前会话设置:{}'.format(settings))
+        self._log.info('设置当前会话设置:{}'.format(settings))

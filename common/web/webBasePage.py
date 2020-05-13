@@ -24,14 +24,11 @@ from common.constant import screenshots_path
 
 class WebBasePage:
     """
-    Web端页面对象基类，供所有页面对象类继承，封装常用操作
-    :param: driver对象
+    Web端页面对象基类，供所有页面对象类继承，封装常用API
+    :param: driver
     """
-
     def __init__(self, driver):
-        # 引用日志类
         self._log = Logger('页面对象').get_logger()
-        # 初始化driver对象
         self._driver = driver
 
     def sleep(self, second: float):
@@ -98,7 +95,6 @@ class WebBasePage:
         :return: None
         """
         self._driver.get(url)
-        self.implicit_wait()
         self._log.info('打开地址：{}'.format(url))
 
     def implicit_wait(self, second=10):
@@ -117,7 +113,7 @@ class WebBasePage:
         :return: WebDriverWait对象，expected_conditions模块对象
         """
         wait = WebDriverWait(self._driver, second)
-        self._log.info('显式等待{}秒'.format(second))
+        self._log.info('设置显式等待为{}秒'.format(second))
         return wait, ec
 
     def wait_elements(self, locator: str):
@@ -134,16 +130,13 @@ class WebBasePage:
                 ec_.presence_of_all_elements_located((select, selector_value))
             )
             self._log.info(f'{selector_by}={selector_value}定位成功：{elements}')
-            if len(elements) == 1:
-                return elements[0]
-            else:
-                return elements
+            return elements[0] if len(elements) == 1 else elements
         except exceptions.NoSuchElementException as e:
             self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位失败：{e}')
-            self.get_screenshots(f'{selector_by}-{selector_value}定位失败')
+            self.screenshot(f'{selector_by}-{selector_value}定位失败')
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位超时')
-            self.get_screenshots(f'{selector_by}-{selector_value}定位超时')
+            self.screenshot(f'{selector_by}-{selector_value}定位超时')
 
     def wait_error_message(self, error_message: str):
         """
@@ -153,64 +146,110 @@ class WebBasePage:
         :return: 布尔值，若验证成功返回True
         """
         locator = (MobileBy.XPATH, f"//*[contains(@text,'{error_message}')]")
+        wait, ec_ = self.explicit_wait(10)
         try:
-            WebDriverWait(self._driver, 10).until(
-                ec.presence_of_element_located(locator)
+            toast_element = wait.until(
+                ec_.presence_of_element_located(locator)
             )
+            self._log.info('页面出现提示语：{}'.format(toast_element.text))
             return True
         except exceptions.NoSuchElementException as e:
             self._log.error(f'显式等待10秒后错误提示未出现或不一致：{e}')
-            self.get_screenshots(error_message)
+            self.screenshot(error_message)
             return False
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后超时')
-            self.get_screenshots(error_message)
+            self.screenshot(error_message)
             return False
 
-    def set_window_size(self, width: float, height: float):
+    @property
+    def window_size(self):
         """
-        设置浏览器大小
+        获取浏览器大小
+        :return: (width, height)
+        """
+        width, height = self._driver.get_window_size()
+        self._log.info('浏览器宽：{}，高：{}'.format(width, height))
+        return width, height
+
+    @property
+    def window_position(self):
+        """
+        获取浏览器左上角位置坐标x,y
+        :return: (x, y)
+        """
+        x, y = self._driver.get_window_position()
+        self._log.info('浏览器位置：({},{})'.format(x, y))
+        return x, y
+
+    @property
+    def window_rect(self):
+        """
+        获取浏览器左上角位置坐标x,y，及宽高
+        :return: (x, y, width, height)
+        """
+        return tuple(list(self.window_position) + list(self.window_size))
+
+    def set_window_rect(self, x=None, y=None, width=None, height=None):
+        """
+        设置浏览器位置，大小
+        :param x: 左上角x坐标
+        :param y: 左上角y坐标
         :param width: 宽
         :param height: 高
         :return: None
         """
-        self._driver.set_window_size(width, height)
-        self._log.info('设置浏览器宽：{}，高：{}'.format(width, height))
+        if x and y and width and height:
+            self._driver.set_window_rect(x, y, width, height)
+            self._log.info(f'设置浏览器位置：({x},{y})，宽：{width}，高：{height}')
+        elif x and y and not width and not height:
+            self._driver.set_window_position(x, y)
+            self._log.info(f'设置浏览器位置：({x},{y})')
+        elif width and height and not x and not y:
+            self._driver.set_window_size(width, height)
+            self._log.info(f'设置浏览器宽：{width}，高：{height}')
+        else:
+            self._log.error('参数传递错误！')
 
-    def get_window_size(self):
+    def maximize_window(self):
         """
-        获取浏览器大小
-        :return: 宽，高
-        """
-        width, height = self._driver.get_window_size()
-        self._log.info('获取到浏览器宽：{}，高：{}'.format(width, height))
-        return width, height
-
-    def maximize_or_minimize_window(self, if_max: bool):
-        """
-        最大化或最小化浏览器
-        :param if_max: True 最大化，False 最小化
+        最大化浏览器
         :return: None
         """
-        if if_max:
-            self._driver.maximize_window()
-            self._log.info('最大化浏览器')
-        else:
-            self._driver.minimize_window()
-            self._log.info('最小化浏览器')
+        self._driver.maximize_window()
+        self._log.info('最大化浏览器')
 
-    def forward_or_back(self, if_forward: bool):
+    def minimize_window(self):
         """
-        控制浏览器前进或后退
-        :param if_forward: True 前进，False 后退
+        最小化浏览器
         :return: None
         """
-        if if_forward:
-            self._driver.forward()
-            self._log.info('前进至下一页')
-        else:
-            self._driver.back()
-            self._log.info('返回上一页')
+        self._driver.minimize_window()
+        self._log.info('最小化浏览器')
+
+    def fullscreen_window(self):
+        """
+        浏览器全屏操作
+        :return: None
+        """
+        self._driver.fullscreen_window()
+        self._log.info('全屏显示浏览器')
+
+    def forward(self):
+        """
+        控制浏览器前进
+        :return: None
+        """
+        self._driver.forward()
+        self._log.info('前进至下一页')
+
+    def back(self):
+        """
+        控制浏览器后退
+        :return: None
+        """
+        self._driver.back()
+        self._log.info('返回至上一页')
 
     def refresh(self):
         """
@@ -221,21 +260,25 @@ class WebBasePage:
         self._log.info('刷新页面')
         self.sleep(1)
 
-    def get_screenshots(self, error_message='error_picture'):
+    @staticmethod
+    def _current_time(self):
+        """当前时间字符串"""
+        return strftime('%Y%m%d%H%M%S', localtime())
+
+    def screenshot(self, error_message='error_picture'):
         """
         截屏，保存至screenshots目录
         :param error_message: 错误信息，截图文件名
         :return: None
         """
-        current_time = strftime('%Y%m%d_%H%M%S', localtime())
-        picture_name = '{}_{}.png'.format(error_message, current_time)
+        picture_name = '{}_{}.png'.format(error_message, self._current_time)
         picture_name_path = join(screenshots_path, picture_name)
         try:
             self._driver.get_screenshot_as_file(picture_name_path)
             self._log.info('截屏成功：{}'.format(picture_name_path))
         except exceptions.ScreenshotException as e:
             self._log.error('截屏失败：{}'.format(e))
-            self.get_screenshots(error_message)
+            self.screenshot(error_message)
 
     @property
     def action_chains(self):
@@ -243,7 +286,7 @@ class WebBasePage:
         链式操作，返回动作链，调用动作链方法使用
         :return: 动作链ActionChains对象
         """
-        self._log.info('执行动作链')
+        self._log.info('调用动作链')
         return ActionChains(self._driver)
 
     def find_element(self, locator: str):
@@ -343,14 +386,18 @@ class WebBasePage:
             selector_by = 'ANDROID_UIAUTOMATOR'
         elif selector_by == 'AV':
             selector_by = 'ANDROID_VIEWTAG'
-        elif selector_by == 'AD':
-            selector_by = 'ANDROID_DATA_MATCHER'
+        # elif selector_by == 'AD':                 # 这两种方式传参特殊，需单独调用
+        #     selector_by = 'ANDROID_DATA_MATCHER'
+        # elif selector_by == 'AM':
+        #     selector_by = 'ANDROID_VIEW_MATCHER'
         elif selector_by == 'IU':
             selector_by = 'IOS_UIAUTOMATION'
         elif selector_by == 'IP':
             selector_by = 'IOS_PREDICATE'
         elif selector_by == 'IC':
             selector_by = 'IOS_CLASS_CHAIN'
+        elif selector_by == 'WU':
+            selector_by = 'WINDOWS_UI_AUTOMATION'
         elif selector_by == 'A':
             selector_by = 'ACCESSIBILITY_ID'
         elif selector_by == 'M':
@@ -362,17 +409,16 @@ class WebBasePage:
             raise Exception(f'{locator}定位器有误，请确认。')
         return selector_by, selector_value
 
-    def send_keys(self, locator: str, text: str):
+    def get_element_text(self, locator: str):
         """
-        输入文本框信息
+        获取元素的文本
         :param locator: 定位器
-        :param text: 文本
-        :return: None
+        :return: text
         """
         element_obj = self.find_element(locator)
-        element_obj.clear()
-        element_obj.send_keys(text)
-        self._log.info('输入文本：{}'.format(text))
+        text = element_obj.text
+        self._log.info('获取到元素的文本：{}'.format(text))
+        return text
 
     def clear(self, locator: str):
         """
@@ -381,8 +427,8 @@ class WebBasePage:
         :return: None
         """
         element_obj = self.find_element(locator)
-        element_obj.clear()
         self._log.info('清空文本框：{}'.format(element_obj.text))
+        element_obj.clear()
 
     def click(self, locator: str):
         """
@@ -458,6 +504,18 @@ class WebBasePage:
             self._log.info('该元素不可见：{}'.format(element_obj.id))
         return bool_
 
+    def send_keys(self, locator: str, text: str):
+        """
+        输入文本框信息
+        :param locator: 定位器
+        :param text: 文本
+        :return: None
+        """
+        element_obj = self.find_element(locator)
+        element_obj.clear()
+        element_obj.send_keys(text)
+        self._log.info('输入文本：{}'.format(text))
+
     @property
     def keys(self):
         """
@@ -485,16 +543,66 @@ class WebBasePage:
     def scroll_element_into_view(self, locator: str):
         """
         使元素滚动到视图中
-        :param locator:
+        :param locator: 定位器
         :return: None
         """
         element_obj = self.find_element(locator)
-        element_obj.location_once_scrolled_into_view()
-        self._log.info('使元素滚动到视图中：{}'.format(element_obj.id))
+        coordinate = element_obj.location_once_scrolled_into_view()
+        if coordinate:
+            self._log.info(f'元素已滚动到视图中，左上角坐标：{coordinate}')
+            return coordinate
+        else:
+            self._log.error('当前视图中无此元素！')
 
-    def get_screenshots_of_element(self, locator: str, picture_name='element_picture'):
+    def get_element_size(self, locator: str):
         """
-        截取指定元素截图
+        获取元素宽高
+        :param locator: 定位器
+        :return: (width, height)
+        """
+        element_obj = self.find_element(locator)
+        width, height = element_obj.size
+        self._log.info('获取到此元素宽：{}，高：{}'.format(width, height))
+        return width, height
+
+    def get_element_location(self, locator: str):
+        """
+        获取元素左上角x,y坐标
+        :param locator: 定位器
+        :return: (x, y)
+        """
+        element_obj = self.find_element(locator)
+        x, y = element_obj.location
+        self._log.info('获取到此元素左上角坐标：({},{})'.format(x, y))
+        return x, y
+
+    def get_element_rect(self, locator: str):
+        """
+        获取元素左上角坐标，及宽高
+        :param locator: 定位器
+        :return: (x, y, width, height)
+        """
+        element_obj = self.find_element(locator)
+        x, y, width, height = element_obj.rect
+        self._log.info(f'获取到此元素左上角坐标：({x},{y}), 宽：{width}，高：{height}')
+        return x, y, width, height
+
+    def screenshot_of_element(self, locator: str, picture_name='element_picture'):
+        """
+        使用内置方法截取元素截图
+        :param locator: 定位器
+        :param picture_name: 截图名称
+        :return: 截图在本机绝对路径
+        """
+        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time}.png')
+        element_obj = self.find_element(locator)
+        element_obj.screenshot(element_obj)
+        self._log.info('成功截取该元素：{}'.format(picture_path))
+        return picture_path
+
+    def screenshot_of_element_with_pillow(self, locator: str, picture_name='element_picture'):
+        """
+        使用PIL库截取截取指定元素截图
         :param locator: 定位器
         :param picture_name: 截图名称
         :return: 截图在本机绝对路径
@@ -504,10 +612,7 @@ class WebBasePage:
         right = element_obj.location['x'] + element_obj.size['width']
         top = element_obj.location['y']
         bottom = element_obj.location['y'] + element_obj.size['height']
-
-        current_time = strftime('%Y%m%d_%H%M%S', localtime())
-        picture_path = join(screenshots_path, f'{picture_name}_{current_time}.png')
-        # 使用PIL库截取
+        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time}.png')
         self._driver.save_screenshot(picture_path)
         im = Image.open(picture_path)
         im = im.crop((left, top, right, bottom))
@@ -555,7 +660,7 @@ class WebBasePage:
         self._log.info('切换至最新窗口')
         return self._driver.current_window_handle
 
-    def switch_alert(self, if_accept: bool):
+    def deal_alert(self, if_accept: bool):
         """
         处理警告框
         :param if_accept: True 接受/确认，False 拒绝/取消
@@ -563,10 +668,29 @@ class WebBasePage:
         """
         if if_accept:
             self._driver.switch_to.alert.accept()
-            self._log.info('确认/接受警告')
+            self._log.info('确认/接受警告框')
         else:
             self._driver.switch_to.alert.dismiss()
-            self._log.info('拒绝/取消警告')
+            self._log.info('拒绝/取消警告框')
+
+    @property
+    def alert_text(self):
+        """
+        获取警告框文本
+        :return: text
+        """
+        text = self._driver.switch_to.alert.text
+        self._log.info('获取到警告框文本内容：{}'.format(text))
+        return text
+
+    def send_text_to_alert(self, text: str):
+        """
+        向警告框发送指定文本
+        :param text: text
+        :return: None
+        """
+        self._driver.switch_to.alert.send_keys(text)
+        self._log.info('向警告框发送文本内容：{}'.format(text))
 
     def switch_to_active_element(self):
         """
@@ -574,7 +698,7 @@ class WebBasePage:
         :return: 返回具有焦点的元素，如果没有焦点，则返回BODY
         """
         element = self._driver.switch_to.active_element
-        self._log.info('成功切换至焦点元素：{}'.format(element.id))
+        self._log.info('切换至焦点元素：{}'.format(element.id))
         return element
 
     def get_cookies(self, name=None):
@@ -585,21 +709,21 @@ class WebBasePage:
         """
         if name:
             cookie = self._driver.get_cookie(name)
-            self._log.info('获取到{}的cookie：{}'.format(name, cookie))
+            self._log.info('获取到cookie：{}={}'.format(name, cookie))
             return cookie
         else:
             cookies = self._driver.get_cookies()
             self._log.info('获取到全部cookies：{}'.format(cookies))
             return cookies
 
-    def add_cookies(self, cookie_dict: dict):
+    def add_cookies(self, **cookies):
         """
-        添加cookie
-        :param cookie_dict: 字典格式cookies
+        添加cookies
+        :param cookies: cookies
         :return: None
         """
-        self.add_cookies(cookie_dict)
-        self._log.info('添加cookies：{}'.format(cookie_dict))
+        self._driver.add_cookie(dict(cookies))
+        self._log.info('添加cookies：{}'.format(cookies))
 
     def delete_cookies(self, name=None):
         """
@@ -609,28 +733,44 @@ class WebBasePage:
         """
         if name:
             self._driver.delete_cookie(name)
-            self._log.info('已删除名为{}的cookie'.format(name))
+            self._log.info('已删除cookie：{}'.format(name))
         else:
             self._driver.delete_all_cookies()
             self._log.info('已删除全部cookies')
 
-    def execute_script(self, js_script: str, timeout=20):
+    def execute_script(self, js_script: str):
         """
-        执行JavaScript语句
+        执行JavaScript
+        :param js_script: JS脚本
+        :return: None
+        """
+        try:
+            self._driver.execute_script(js_script)
+            self._log.info('执行JS：{}'.format(js_script))
+        except exceptions.JavascriptException as e:
+            self._log.error('JS执行失败或语法错误：{}'.format(e))
+            self.screenshot('JS执行失败')
+        except exceptions.TimeoutException:
+            self._log.error('JS执行超时。')
+            self.screenshot('JS执行超时')
+
+    def execute_async_script(self, js_script: str, timeout=20):
+        """
+        异步执行JavaScript
         :param js_script: JS脚本
         :param timeout: JS执行超时时间，默认20秒
         :return: None
         """
         try:
             self._driver.set_script_timeout(timeout)
-            self._driver.execute_script(js_script)
+            self._driver.execute_async_script(js_script)
             self._log.info('执行JS：{}'.format(js_script))
         except exceptions.JavascriptException as e:
             self._log.error('JS执行失败或语法错误：{}'.format(e))
-            self.get_screenshots('JS执行失败')
+            self.screenshot('JS执行失败')
         except exceptions.TimeoutException:
             self._log.error('JS执行超时。')
-            self.get_screenshots('JS执行超时')
+            self.screenshot('JS执行超时')
 
     def vertical_scroll(self, sliding_length=0):
         """
@@ -642,7 +782,7 @@ class WebBasePage:
         js = f'document.documentElement.scrollTop={sliding_length}'
         self.execute_script(js)
 
-    def set_page_timeout(self, timeout=20):
+    def set_page_load_timeout(self, timeout=20):
         """
         设置页面加载超时时间
         :param timeout: 默认20秒
@@ -667,7 +807,7 @@ class WebBasePage:
             select.select_by_value(value)
         elif way == 3:
             select.select_by_visible_text(value)
-        self._log.info('下拉框选取成功，选取值为：{}'.format(select.first_selected_option))
+        self._log.info('选取下拉框值为：{}'.format(select.first_selected_option))
 
     def deselect_by_given(self, locator: str, way: int, value=None):
         """

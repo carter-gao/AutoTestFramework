@@ -32,7 +32,7 @@ app_data_path = join(join(__base_path, 'data'), 'data_app')
 # 定位器yaml文件目录
 yaml_path = join(join(__base_path, 'data'), 'yaml_locator')
 # 图像定位器目录
-image_locator_path = join(join(__base_path, 'data'), 'image_locator')
+image_locator_main_path = join(join(__base_path, 'data'), 'image_locator')
 # 截图目录
 screenshots_path = join(join(__base_path, 'results'), 'screenshots')
 # 测试报告目录
