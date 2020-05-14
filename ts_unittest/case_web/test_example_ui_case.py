@@ -15,7 +15,7 @@ class BaiDuSearch(BaseTestCase):
 
     def test_search(self):
         """搜索用例"""
-        self.bai_du.maximize_or_minimize_window(if_max=True)
+        self.bai_du.maximize_window()
         self.bai_du.get(self.homepage)
         self.assert_equal('百度一下，你就知道', self.bai_du.title)
         self.bai_du.input_content('selenium')
