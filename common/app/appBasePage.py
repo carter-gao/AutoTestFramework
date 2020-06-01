@@ -39,8 +39,8 @@ class _OverrideWebForApp(WebBasePage):
             else:
                 img_path = join(image_locator_main_path, selector_value)
                 element = self._driver.find_element_by_image(img_path)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到该元素')
             return element
@@ -60,8 +60,8 @@ class _OverrideWebForApp(WebBasePage):
             else:
                 img_path = join(image_locator_main_path, selector_value)
                 elements = self._driver.find_elements_by_image(img_path)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到当前页面所有元素')
             return elements
@@ -72,7 +72,8 @@ class _OverrideWebForApp(WebBasePage):
         获取手机屏幕大小
         :return: 宽，高
         """
-        width, height = self._driver.get_window_size()
+        size = self._driver.get_window_size()
+        width, height = size['width'], size['height']
         self._log.info('获取到手机屏幕宽：{}，高：{}'.format(width, height))
         return width, height
 
@@ -180,7 +181,7 @@ class _AppBasePage(_OverrideWebForApp):
         :param number_of_times: 滑动次数，默认1次
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         x1 = int(x / 10 * 9)
         x2 = int(x / 10 * 1)
         y1 = int(y / 2)
@@ -194,7 +195,7 @@ class _AppBasePage(_OverrideWebForApp):
         :param number_of_times: 滑动次数，默认1次
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         x1 = int(x / 10 * 1)
         x2 = int(x / 10 * 9)
         y1 = int(y / 2)
@@ -208,7 +209,7 @@ class _AppBasePage(_OverrideWebForApp):
         :param number_of_times: 滑动次数，默认1次
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         x1 = int(x / 2)
         y1 = int(y / 10 * 8)
         y2 = int(y / 10 * 2)
@@ -222,7 +223,7 @@ class _AppBasePage(_OverrideWebForApp):
         :param number_of_times: 滑动次数，默认1次
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         x1 = int(x / 2)
         y1 = int(y / 10 * 2)
         y2 = int(y / 10 * 8)
@@ -235,7 +236,7 @@ class _AppBasePage(_OverrideWebForApp):
         放大屏幕，双指外划
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         action1 = TouchAction(self._driver)
         action2 = TouchAction(self._driver)
         zoom_action = MultiAction(self._driver)
@@ -250,7 +251,7 @@ class _AppBasePage(_OverrideWebForApp):
         缩小屏幕，模拟双指捏
         :return: None
         """
-        x, y = self._driver.get_window_size()
+        x, y = self.window_size
         action1 = TouchAction(self._driver)
         action2 = TouchAction(self._driver)
         pinch_action = MultiAction(self._driver)

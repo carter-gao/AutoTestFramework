@@ -33,7 +33,7 @@ class WebBasePage:
 
     def sleep(self, second: float):
         """
-        休眠时间
+        休眠几秒
         :param second: 秒
         :return:
         """
@@ -97,7 +97,7 @@ class WebBasePage:
         self._driver.get(url)
         self._log.info('打开地址：{}'.format(url))
 
-    def implicit_wait(self, second=10):
+    def implicit_wait(self, second=8):
         """
         设置隐式等待
         :param second: 秒
@@ -106,14 +106,15 @@ class WebBasePage:
         self._driver.implicitly_wait(second)
         self._log.info('设置隐式等待为{}秒'.format(second))
 
-    def explicit_wait(self, second=10):
+    def explicit_wait(self, timeout=10, poll_frequency=0.5):
         """
         设置显式等待，调用时返回expected_conditions模块，配合until和until_not方法可以指定条件获得元素
-        :param second: 秒
+        :param timeout: 超时秒数，默认10s
+        :param poll_frequency: 调用间隔，默认0.5s
         :return: WebDriverWait对象，expected_conditions模块对象
         """
-        wait = WebDriverWait(self._driver, second)
-        self._log.info('设置显式等待为{}秒'.format(second))
+        wait = WebDriverWait(self._driver, timeout, poll_frequency)
+        self._log.info('设置显式等待为{}秒'.format(timeout))
         return wait, ec
 
     def wait_elements(self, locator: str):
@@ -123,7 +124,7 @@ class WebBasePage:
         :return: 单个element对象，或多个element对象列表
         """
         selector_by, selector_value = self._deal_locator(locator)
-        wait, ec_ = self.explicit_wait(10)
+        wait, ec_ = self.explicit_wait()
         try:
             select = getattr(MobileBy, selector_by)
             elements = wait.until(
@@ -136,31 +137,28 @@ class WebBasePage:
             self.screenshot(f'{selector_by}-{selector_value}定位失败')
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位超时')
-            self.screenshot(f'{selector_by}-{selector_value}定位超时')
 
-    def wait_error_message(self, error_message: str):
+    def wait_toast_message(self, toast_message=None):
         """
         某些报错信息不弹出警示框，直接以文字提示，一般几秒后会消失
         可使用XPath方式配合显式等待定位，返回element对象，断言判断是否为True
-        :param error_message: 错误提示信息
+        :param toast_message: 提示信息，移动端测试可不传
         :return: 布尔值，若验证成功返回True
         """
-        locator = (MobileBy.XPATH, f"//*[contains(@text,'{error_message}')]")
-        wait, ec_ = self.explicit_wait(10)
+        xpath = "//*[@class='android.widget.Toast']"
+        if toast_message:
+            xpath = f"//*[contains(@text,'{toast_message}')]"
+        wait, ec_ = self.explicit_wait()
         try:
             toast_element = wait.until(
-                ec_.presence_of_element_located(locator)
+                ec_.presence_of_element_located((MobileBy.XPATH, xpath))
             )
-            self._log.info('页面出现提示语：{}'.format(toast_element.text))
-            return True
+            self._log.info('获取到toast：{}'.format(toast_element.text))
+            return toast_element.text
         except exceptions.NoSuchElementException as e:
-            self._log.error(f'显式等待10秒后错误提示未出现或不一致：{e}')
-            self.screenshot(error_message)
-            return False
+            self._log.error(f'显式等待10秒后错误提示未出现：{e}')
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后超时')
-            self.screenshot(error_message)
-            return False
 
     @property
     def window_size(self):
@@ -168,7 +166,8 @@ class WebBasePage:
         获取浏览器大小
         :return: (width, height)
         """
-        width, height = self._driver.get_window_size()
+        size = self._driver.get_window_size()
+        width, height = size['width'], size['height']
         self._log.info('浏览器宽：{}，高：{}'.format(width, height))
         return width, height
 
@@ -178,7 +177,8 @@ class WebBasePage:
         获取浏览器左上角位置坐标x,y
         :return: (x, y)
         """
-        x, y = self._driver.get_window_position()
+        position = self._driver.get_window_position()
+        x, y = position['x'], position['y']
         self._log.info('浏览器位置：({},{})'.format(x, y))
         return x, y
 
@@ -261,7 +261,7 @@ class WebBasePage:
         self.sleep(1)
 
     @staticmethod
-    def _current_time(self):
+    def _current_time():
         """当前时间字符串"""
         return strftime('%Y%m%d%H%M%S', localtime())
 
@@ -269,9 +269,9 @@ class WebBasePage:
         """
         截屏，保存至screenshots目录
         :param error_message: 错误信息，截图文件名
-        :return: None
+        :return: 截图路径
         """
-        picture_name = '{}_{}.png'.format(error_message, self._current_time)
+        picture_name = '{}_{}.png'.format(error_message, self._current_time())
         picture_name_path = join(screenshots_path, picture_name)
         try:
             self._driver.get_screenshot_as_file(picture_name_path)
@@ -279,6 +279,7 @@ class WebBasePage:
         except exceptions.ScreenshotException as e:
             self._log.error('截屏失败：{}'.format(e))
             self.screenshot(error_message)
+        return picture_name_path
 
     @property
     def action_chains(self):
@@ -297,12 +298,11 @@ class WebBasePage:
         :return: element对象
         """
         selector_by, selector_value = self._deal_locator(locator)
-        # 通过反射自动匹配定位方式
         select = getattr(MobileBy, selector_by)
         try:
             element = self._driver.find_element(select, selector_value)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到该元素')
             return element
@@ -318,8 +318,8 @@ class WebBasePage:
         select = getattr(MobileBy, selector_by)
         try:
             elements = self._driver.find_elements(select, selector_value)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到当前页面所有元素')
             return elements
@@ -335,8 +335,8 @@ class WebBasePage:
         select = getattr(MobileBy, selector_by)
         try:
             element = element_obj.find_element(select, selector_value)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的子元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到子元素')
             return element
@@ -352,8 +352,8 @@ class WebBasePage:
         select = getattr(MobileBy, selector_by)
         try:
             elements = element_obj.find_elements(select, selector_value)
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'{selector_by}为{selector_value}的子元素定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'通过{selector_by}={selector_value}没有定位到元素')
         else:
             self._log.info(f'通过{selector_by}={selector_value}成功定位到子元素集')
             return elements
@@ -438,7 +438,7 @@ class WebBasePage:
         """
         element_obj = self.find_element(locator)
         element_obj.click()
-        self._log.info('点击操作：{}'.format(element_obj.text))
+        self._log.info('点击操作：{}'.format(element_obj.id))
 
     def submit(self, locator: str):
         """
@@ -594,9 +594,9 @@ class WebBasePage:
         :param picture_name: 截图名称
         :return: 截图在本机绝对路径
         """
-        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time}.png')
+        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time()}.png')
         element_obj = self.find_element(locator)
-        element_obj.screenshot(element_obj)
+        element_obj.screenshot(picture_path)
         self._log.info('成功截取该元素：{}'.format(picture_path))
         return picture_path
 
@@ -612,7 +612,7 @@ class WebBasePage:
         right = element_obj.location['x'] + element_obj.size['width']
         top = element_obj.location['y']
         bottom = element_obj.location['y'] + element_obj.size['height']
-        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time}.png')
+        picture_path = join(screenshots_path, f'{picture_name}_{self._current_time()}.png')
         self._driver.save_screenshot(picture_path)
         im = Image.open(picture_path)
         im = im.crop((left, top, right, bottom))

@@ -87,9 +87,9 @@ class AndroidBasePage(_AppBasePage):
         """
         try:
             self._driver.start_activity(app_package, app_activity, **opts)
-            self._log.info('应用启动成功：{}/{}'.format(app_package, app_activity))
+            self._log.info('启动成功：{}/{}'.format(app_package, app_activity))
         except WebDriverException as e:
-            self._log.error('应用起动失败：{}'.format(e))
+            self._log.error('起动失败：{}'.format(e))
 
     def wait_activity(self, activity: str, timeout=10):
         """
