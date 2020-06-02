@@ -100,7 +100,7 @@ class _AppBasePage(_OverrideWebForApp):
         :return: None
         """
         multi_actions = MultiAction(self._driver)
-        multi_actions.add(*action_chains)
+        multi_actions.add(action_chains)
         multi_actions.perform()
         self._log.info('执行多点触控操作')
 

@@ -27,6 +27,7 @@ class WebBasePage:
     Web端页面对象基类，供所有页面对象类继承，封装常用API
     :param: driver
     """
+
     def __init__(self, driver):
         self._log = Logger('页面对象').get_logger()
         self._driver = driver
@@ -132,8 +133,8 @@ class WebBasePage:
             )
             self._log.info(f'{selector_by}={selector_value}定位成功：{elements}')
             return elements[0] if len(elements) == 1 else elements
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位失败：{e}')
+        except exceptions.NoSuchElementException:
+            self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位失败')
             self.screenshot(f'{selector_by}-{selector_value}定位失败')
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后{selector_by}={selector_value}定位超时')
@@ -153,10 +154,11 @@ class WebBasePage:
             toast_element = wait.until(
                 ec_.presence_of_element_located((MobileBy.XPATH, xpath))
             )
-            self._log.info('获取到toast：{}'.format(toast_element.text))
-            return toast_element.text
-        except exceptions.NoSuchElementException as e:
-            self._log.error(f'显式等待10秒后错误提示未出现：{e}')
+            text = toast_element.text
+            self._log.info('获取到toast：{}'.format(text))
+            return text
+        except exceptions.NoSuchElementException:
+            self._log.error(f'显式等待10秒后toast未出现')
         except exceptions.TimeoutException:
             self._log.error(f'显式等待10秒后超时')
 
@@ -276,10 +278,10 @@ class WebBasePage:
         try:
             self._driver.get_screenshot_as_file(picture_name_path)
             self._log.info('截屏成功：{}'.format(picture_name_path))
+            return picture_name_path
         except exceptions.ScreenshotException as e:
             self._log.error('截屏失败：{}'.format(e))
             self.screenshot(error_message)
-        return picture_name_path
 
     @property
     def action_chains(self):
@@ -561,7 +563,8 @@ class WebBasePage:
         :return: (width, height)
         """
         element_obj = self.find_element(locator)
-        width, height = element_obj.size
+        size = element_obj.size
+        width, height = size['width'], size['height']
         self._log.info('获取到此元素宽：{}，高：{}'.format(width, height))
         return width, height
 
@@ -572,7 +575,8 @@ class WebBasePage:
         :return: (x, y)
         """
         element_obj = self.find_element(locator)
-        x, y = element_obj.location
+        location = element_obj.location
+        x, y = location['x'], location['y']
         self._log.info('获取到此元素左上角坐标：({},{})'.format(x, y))
         return x, y
 
@@ -582,10 +586,8 @@ class WebBasePage:
         :param locator: 定位器
         :return: (x, y, width, height)
         """
-        element_obj = self.find_element(locator)
-        x, y, width, height = element_obj.rect
-        self._log.info(f'获取到此元素左上角坐标：({x},{y}), 宽：{width}，高：{height}')
-        return x, y, width, height
+        return tuple(list(self.get_element_location(locator)) +
+                     list(self.get_element_size(locator)))
 
     def screenshot_of_element(self, locator: str, picture_name='element_picture'):
         """
@@ -596,7 +598,8 @@ class WebBasePage:
         """
         picture_path = join(screenshots_path, f'{picture_name}_{self._current_time()}.png')
         element_obj = self.find_element(locator)
-        element_obj.screenshot(picture_path)
+        assert element_obj.screenshot(picture_path), \
+            self._log.error('截取元素失败：{}'.format(picture_path))
         self._log.info('成功截取该元素：{}'.format(picture_path))
         return picture_path
 
@@ -647,18 +650,34 @@ class WebBasePage:
                 frame = self.find_element(locator)
                 self._driver.switch_to.frame(frame)
             self._log.info(f'切换frame成功({selector_by}={selector_value})')
-        except exceptions.NoSuchFrameException as e:
-            self._log.error(f'切换frame失败({selector_by}={selector_value}：{e})')
+        except exceptions.NoSuchFrameException:
+            self._log.error(f'切换frame失败({selector_by}={selector_value})')
 
-    def switch_window(self):
+    @property
+    def current_window_handle(self):
         """
-        切换至最新窗口
-        :return: 切换后的窗口handle
+        获取当前句柄
+        :return: 当前窗口handle
+        """
+        return self._driver.current_window_handle
+
+    def switch_new_window(self):
+        """
+        切换至最新窗口；调用前先获取当前句柄，以便后面再切回原窗口
+        :return: None
         """
         windows = self._driver.window_handles
         self._driver.switch_to.window(windows[-1])
         self._log.info('切换至最新窗口')
-        return self._driver.current_window_handle
+
+    def switch_original_window(self, window_handle):
+        """
+        切换回原窗口
+        :param window_handle: 原窗口handle
+        :return: None
+        """
+        self._driver.switch_to.window(window_handle)
+        self._log.info('切换回原窗口')
 
     def deal_alert(self, if_accept: bool):
         """
